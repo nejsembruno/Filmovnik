@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Filmář</title>
+<title>Filmovník</title>
 <style>
   :root {
     --bg: #08080b;
@@ -46,7 +46,7 @@
   .content { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 28px 18px 130px; }
 
   header { display: flex; align-items: center; gap: 16px; padding: 12px 4px 26px; }
-  header h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
+  header h1 { font-family: 'Courier New', Courier, monospace; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
 
   .view { display: none; }
   .view.active { display: block; }
@@ -208,41 +208,22 @@
   .detail-ratings .rating strong { font-size: 20px; }
   .detail-note { font-size: 14px; color: var(--text-dim); line-height: 1.5; }
 
-  /* --- mobile-first polish --- */
-  body { background:#08080b; }
-  .content { max-width:430px; padding:22px 14px 126px; }
-  header { display:block; padding:10px 4px 20px; }
-  header h1 { font-size:32px; line-height:1.05; }
-  .header-meta { color:var(--text-dim); font-size:12px; margin-top:7px; }
-  .movie-list, .watch-list { gap:9px; }
-  .swipe-wrap { position:relative; border-radius:14px; overflow:hidden; }
-  .swipe-bg { position:absolute; inset:0; display:flex; align-items:center; pointer-events:none; opacity:0; transition:opacity .12s ease; }
-  .swipe-bg.delete { justify-content:flex-end; padding-right:20px; background:linear-gradient(90deg,transparent 48%,rgba(166,62,69,.08) 74%,rgba(166,62,69,.19)); color:#d98b91; }
-  .swipe-bg.edit { justify-content:flex-start; padding-left:20px; background:linear-gradient(270deg,transparent 48%,rgba(199,173,110,.07) 74%,rgba(199,173,110,.17)); color:var(--gold-bright); }
-  .swipe-icon { width:19px; height:19px; opacity:.9; }
-  .movie-row,.watch-row { position:relative; z-index:1; width:100%; min-height:102px; background:#15151b; will-change:transform; touch-action:pan-y; transition:transform .24s cubic-bezier(.2,.8,.2,1), background .2s ease; }
-  .watch-row { min-height:66px; }
-  .poster { width:56px; height:82px; }
-  .movie-info h3,.watch-title { font-size:15px; }
-  .ratings { gap:13px; margin-top:8px; }
-  .rating-stars { color:var(--gold-bright); font-size:13px; letter-spacing:1px; white-space:nowrap; }
-  .rating-person { color:var(--text-dim); font-size:10px; margin-left:5px; }
-  .fab { bottom:88px; min-width:64px; height:48px; padding:0 20px; border:1px solid rgba(255,255,255,.1); background:rgba(25,25,31,.88); color:var(--gold-bright); font-size:25px; font-weight:400; box-shadow:0 10px 28px rgba(0,0,0,.34); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
-  .tabbar { max-width:430px; padding:9px 0 calc(12px + env(safe-area-inset-bottom)); background:rgba(19,19,24,.94); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
-  .sheet { max-width:430px; padding-bottom:calc(28px + env(safe-area-inset-bottom)); }
-  .detail-poster { max-height:300px; }
-  .match-card { display:flex; align-items:center; justify-content:space-between; background:#1b1b21; border:1px solid var(--card-border); border-radius:12px; padding:12px 14px; margin:0 0 16px; }
-  .match-card span { color:var(--text-dim); font-size:12px; }
-  .match-card strong { color:var(--gold-bright); font-size:18px; }
-  .confirm-sheet { text-align:center; padding-left:22px; padding-right:22px; }
-  .confirm-icon { width:42px; height:42px; display:grid; place-items:center; margin:4px auto 14px; border-radius:50%; background:rgba(166,62,69,.11); color:#d98b91; }
-  .confirm-sheet h2 { font-size:19px; margin-bottom:7px; }
-  .confirm-copy { color:var(--text-dim); font-size:13px; line-height:1.45; margin-bottom:18px; }
+  /* Mobile swipe actions */
+  .swipe-shell { position:relative; overflow:hidden; border-radius:14px; }
+  .swipe-hint { position:absolute; inset:0; display:flex; align-items:center; opacity:0; pointer-events:none; transition:opacity .12s ease; }
+  .swipe-hint.edit { justify-content:flex-start; padding-left:20px; color:var(--gold-bright); background:linear-gradient(90deg,rgba(199,173,110,.16),rgba(199,173,110,.04) 48%,transparent 75%); }
+  .swipe-hint.delete { justify-content:flex-end; padding-right:20px; color:#d58a90; background:linear-gradient(270deg,rgba(163,60,68,.17),rgba(163,60,68,.04) 48%,transparent 75%); }
+  .swipe-hint svg { width:19px; height:19px; }
+  .swipe-shell .movie-row,.swipe-shell .watch-row { position:relative; z-index:1; width:100%; touch-action:pan-y; will-change:transform; }
+  .compact-rating { display:inline-flex; align-items:center; gap:4px; color:var(--gold-bright); font-size:14px; font-weight:700; }
+  .compact-rating .rating-name { color:var(--text-dim); font-size:11px; font-weight:500; margin-left:2px; }
+  .confirm-sheet { text-align:center; }
+  .confirm-sheet h2 { font-size:19px; margin:4px 0 8px; }
+  .confirm-sheet p { color:var(--text-dim); font-size:13px; line-height:1.45; margin-bottom:18px; }
   .confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
-  .confirm-btn { min-height:46px; border-radius:12px; font:600 14px inherit; }
+  .confirm-actions button { min-height:46px; border-radius:12px; font:600 14px inherit; }
   .confirm-cancel { background:#1b1b21; color:var(--text); border:1px solid var(--card-border); }
-  .confirm-delete { background:rgba(166,62,69,.14); color:#e1a0a5; border:1px solid rgba(166,62,69,.2); }
-  @media (min-width:600px) { .content { padding-top:34px; } }
+  .confirm-delete { background:rgba(163,60,68,.14); color:#e2a0a5; border:1px solid rgba(163,60,68,.22); }
 
 </style>
 </head>
@@ -255,7 +236,7 @@
   </div>
 
   <div class="content">
-    <header><h1>Filmář</h1><div class="header-meta" id="headerMeta"></div></header>
+    <header><h1>Filmovník</h1></header>
 
     <div class="view active" id="viewRated">
       <div class="movie-list" id="movieList"></div>
@@ -266,7 +247,7 @@
     </div>
   </div>
 
-  <button class="fab" id="openAdd" aria-label="Přidat">＋</button>
+  <button class="fab" id="openAdd">+ Přidat film</button>
 
   <div class="tabbar">
     <button class="tab-btn active" id="tabRated">
@@ -360,18 +341,19 @@
     <span class="rating"><strong id="detailMe"></strong>Bruno</span>
     <span class="rating"><strong id="detailHer"></strong>Zuzi</span>
   </div>
-  <div class="match-card"><span>Shoda hodnocení</span><strong id="detailMatch">–</strong></div><div class="detail-note" id="detailNote"></div>
+  <div class="detail-note" id="detailNote"></div>
   <button class="sheet-btn-ghost" id="editMovie">Upravit</button>
 </div>
 
 
-<!-- sheet: potvrzení smazání -->
 <div class="sheet confirm-sheet" id="confirmSheet">
   <button class="sheet-close" data-close aria-label="Zavřít"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 7L10 13L16 7" stroke="#6b6c74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <div class="confirm-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
   <h2>Smazat položku?</h2>
-  <div class="confirm-copy" id="confirmCopy"></div>
-  <div class="confirm-actions"><button class="confirm-btn confirm-cancel" id="cancelDelete">Zrušit</button><button class="confirm-btn confirm-delete" id="confirmDelete">Smazat</button></div>
+  <p id="confirmText"></p>
+  <div class="confirm-actions">
+    <button class="confirm-cancel" id="cancelDelete">Zrušit</button>
+    <button class="confirm-delete" id="confirmDelete">Smazat</button>
+  </div>
 </div>
 <script>
   // --- hvězdné pozadí ---
@@ -464,6 +446,7 @@
     selectedCategory = value;
     document.querySelectorAll('#categoryToggle .segment').forEach(b => b.classList.toggle('active', b.dataset.value === value));
     categoryIndicator.style.transform = value === 'serial' ? 'translateX(100%)' : 'translateX(0%)';
+    if (editingIndex === null) document.getElementById('saveMovie').textContent = value === 'serial' ? 'Uložit seriál' : 'Uložit film';
   }
   document.querySelectorAll('#categoryToggle .segment').forEach(btn => {
     btn.addEventListener('click', () => setCategoryUI(btn.dataset.value));
@@ -486,18 +469,16 @@
   });
 
   // --- data ---
-  let movies = JSON.parse(localStorage.getItem('filmarMovies') || 'null') || [
+  let movies = [
     { title: "Perfect Days", category: "film", poster: "", me: 8, her: 9, note: "Klidný, pomalý film o obyčejném životě, který má krásu v detailech." },
     { title: "Anora", category: "film", poster: "", me: 7, her: 7, note: "" },
     { title: "The Bear", category: "serial", poster: "", me: 9, her: 8, note: "" },
     { title: "Poor Things", category: "film", poster: "", me: 9, her: 6, note: "Vizuálně unikátní, ale ne pro každého." }
   ];
-  let watchlist = JSON.parse(localStorage.getItem('filmarWatchlist') || 'null') || [
+  let watchlist = [
     { title: "Poslední z nás", category: "serial", watching: true },
     { title: "Duna: Část druhá", category: "film", watching: false }
   ];
-  movies = movies.map((m,i) => ({...m, id:m.id || 'm'+Date.now()+i, me:m.me>5?m.me/2:m.me, her:m.her>5?m.her/2:m.her}));
-  watchlist = watchlist.map((w,i) => ({...w, id:w.id || 'w'+Date.now()+i}));
   let editingIndex = null;
   let currentDetailIndex = null;
 
@@ -507,83 +488,51 @@
     "linear-gradient(160deg,#2f1f2a,#141116)"
   ];
 
-  
-  const trashSvg = `<svg class="swipe-icon" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const editSvg = `<svg class="swipe-icon" viewBox="0 0 24 24" fill="none"><path d="m4 20 4.2-1 10.6-10.6a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  function starText(value) {
-    const rounded = Math.round(Number(value));
-    return '★'.repeat(rounded) + '☆'.repeat(5-rounded);
-  }
-  function persist() {
-    localStorage.setItem('filmarMovies', JSON.stringify(movies));
-    localStorage.setItem('filmarWatchlist', JSON.stringify(watchlist));
-    updateHeader();
-  }
-  function updateHeader() {
-    document.getElementById('headerMeta').textContent = `${movies.length} hodnoceno  •  ${watchlist.length} ve watchlistu`;
-  }
+
+  const iconEdit = `<svg viewBox="0 0 24 24" fill="none"><path d="m4 20 4.2-1 10.6-10.6a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const iconDelete = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   let pendingDelete = null;
-  const confirmSheet = document.getElementById('confirmSheet');
-  function askDelete(type, id, title) {
-    pendingDelete = { type, id };
-    document.getElementById('confirmCopy').textContent = `„${title}“ bude trvale odstraněno.`;
-    overlay.classList.add('active');
-    confirmSheet.classList.add('active');
+  function bindSwipe(row, onEdit, onDelete) {
+    let sx=0, sy=0, dx=0, tracking=false, horizontal=false, suppressClick=false;
+    const shell=row.closest('.swipe-shell'), editHint=shell.querySelector('.swipe-hint.edit'), deleteHint=shell.querySelector('.swipe-hint.delete');
+    row.addEventListener('touchstart', e=>{ if(e.touches.length!==1)return; sx=e.touches[0].clientX; sy=e.touches[0].clientY; dx=0; tracking=true; horizontal=false; row.style.transition='none'; },{passive:true});
+    row.addEventListener('touchmove', e=>{ if(!tracking)return; const x=e.touches[0].clientX-sx,y=e.touches[0].clientY-sy; if(!horizontal && Math.abs(x)>8) horizontal=Math.abs(x)>Math.abs(y); if(!horizontal)return; e.preventDefault(); dx=Math.max(-105,Math.min(105,x)); if(!onEdit&&dx>0)dx=0; row.style.transform=`translateX(${dx}px)`; editHint.style.opacity=dx>8?Math.min(1,(dx-8)/55):0; deleteHint.style.opacity=dx<-8?Math.min(1,(-dx-8)/55):0; },{passive:false});
+    row.addEventListener('touchend', ()=>{ if(!tracking)return; tracking=false; row.style.transition='transform .24s cubic-bezier(.2,.8,.2,1)'; row.style.transform=''; editHint.style.opacity=0; deleteHint.style.opacity=0; if(Math.abs(dx)>15)suppressClick=true; if(dx>70&&onEdit)onEdit(); if(dx<-70&&onDelete)onDelete(); setTimeout(()=>suppressClick=false,280); });
+    row.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation();}},true);
   }
-  function bindSwipe(el, onEdit, onDelete) {
-    let startX = 0, startY = 0, dx = 0, dragging = false;
-    const leftBg = el.parentElement.querySelector('.swipe-bg.edit');
-    const rightBg = el.parentElement.querySelector('.swipe-bg.delete');
-    el.addEventListener('pointerdown', e => { startX=e.clientX; startY=e.clientY; dx=0; dragging=true; el.setPointerCapture(e.pointerId); });
-    el.addEventListener('pointermove', e => {
-      if (!dragging) return;
-      const moveX=e.clientX-startX, moveY=e.clientY-startY;
-      if (Math.abs(moveY)>Math.abs(moveX) && Math.abs(moveY)>8) { dragging=false; el.style.transform=''; return; }
-      dx=Math.max(-105,Math.min(105,moveX));
-      if (!onEdit && dx>0) dx=0;
-      el.style.transition='none'; el.style.transform=`translateX(${dx}px)`;
-      leftBg.style.opacity=dx>12?Math.min(1,(dx-12)/58):0;
-      rightBg.style.opacity=dx<-12?Math.min(1,(-dx-12)/58):0;
-    });
-    const finish=()=>{
-      if (!dragging) return; dragging=false;
-      el.style.transition='transform .24s cubic-bezier(.2,.8,.2,1)'; el.style.transform=''; leftBg.style.opacity=0; rightBg.style.opacity=0;
-      if (dx>72 && onEdit) onEdit();
-      if (dx<-72 && onDelete) onDelete();
-      dx=0;
-    };
-    el.addEventListener('pointerup',finish); el.addEventListener('pointercancel',finish);
+  function requestDelete(type,index,title){ pendingDelete={type,index}; document.getElementById('confirmText').textContent=`Opravdu chceš smazat „${title}“?`; overlay.classList.add('active'); confirmSheet.classList.add('active'); }
+  function openEditAt(index){
+    const m=movies[index]; editingIndex=index;
+    document.getElementById('inpTitle').value=m.title; document.getElementById('inpPoster').value=m.poster; document.getElementById('inpNote').value=m.note;
+    setCategoryUI(m.category); const meVal=m.me/2,herVal=m.her/2; rMe.value=meVal;rHer.value=herVal;
+    updateStarSlider('starMe',meVal);updateStarSlider('starHer',herVal);document.getElementById('valMe').textContent=meVal;document.getElementById('valHer').textContent=herVal;
+    document.getElementById('saveMovie').textContent=m.category==='serial'?'Uložit změny seriálu':'Uložit změny filmu'; closeSheets(); overlay.classList.add('active');addSheet.classList.add('active');
   }
 
   function renderList(highlightFirst) {
-    const list = document.getElementById('movieList');
-    if (!movies.length) { list.innerHTML='<div class="empty-state">Zatím žádné filmy. Přidej první tlačítkem dole.</div>'; updateHeader(); return; }
-    list.innerHTML = movies.map((m,i) => {
-      const bg=m.poster?`background-image:url('${m.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;
-      return `<div class="swipe-wrap" data-wrap-id="${m.id}"><div class="swipe-bg edit">${editSvg}</div><div class="swipe-bg delete">${trashSvg}</div><div class="movie-row" data-id="${m.id}"><div class="poster" style="${bg}"></div><div class="movie-info"><h3>${m.title}</h3><span class="badge">${categoryLabels[m.category]||'Film'}</span><div class="ratings"><span><span class="rating-stars">${starText(m.me)}</span><span class="rating-person">Bruno</span></span><span><span class="rating-stars">${starText(m.her)}</span><span class="rating-person">Zuzi</span></span></div></div></div></div>`;
-    }).join('');
-    if (highlightFirst) list.querySelector('.movie-row')?.classList.add('enter');
-    list.querySelectorAll('.movie-row').forEach(row=>{
-      const id=row.dataset.id, index=movies.findIndex(m=>m.id===id), item=movies[index];
-      row.addEventListener('click',()=>openDetail(index));
-      bindSwipe(row,()=>openEdit(index),()=>askDelete('movie',id,item.title));
-    });
-    updateHeader();
+    const list=document.getElementById('movieList');
+    if(!movies.length){list.innerHTML='<div class="empty-state">Zatím žádné filmy. Přidej první tlačítkem dole.</div>';return;}
+    list.innerHTML=movies.map((m,i)=>{const bg=m.poster?`background-image:url('${m.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;return `<div class="swipe-shell"><div class="swipe-hint edit">${iconEdit}</div><div class="swipe-hint delete">${iconDelete}</div><div class="movie-row" data-index="${i}"><div class="poster" style="${bg}"></div><div class="movie-info"><h3>${m.title}</h3><span class="badge">${categoryLabels[m.category]||'Film'}</span><div class="ratings"><span class="compact-rating">${(m.me/2).toFixed(1)} ★<span class="rating-name">Bruno</span></span><span class="compact-rating">${(m.her/2).toFixed(1)} ★<span class="rating-name">Zuzi</span></span></div></div></div></div>`}).join('');
+    if(highlightFirst)list.querySelector('.movie-row')?.classList.add('enter');
+    list.querySelectorAll('.movie-row').forEach(row=>{const i=+row.dataset.index;row.addEventListener('click',()=>openDetail(i));bindSwipe(row,()=>openEditAt(i),()=>requestDelete('movie',i,movies[i].title));});
   }
   function renderWatchlist(highlightFirst) {
     const list=document.getElementById('watchlistList');
-    if (!watchlist.length) { list.innerHTML='<div class="empty-state">Watchlist je prázdný. Přidej první tip tlačítkem dole.</div>'; updateHeader(); return; }
-    list.innerHTML=watchlist.map(w=>`<div class="swipe-wrap"><div class="swipe-bg edit"></div><div class="swipe-bg delete">${trashSvg}</div><div class="watch-row" data-id="${w.id}"><button class="watch-check" data-check="${w.id}" aria-label="Přesunout do hodnocených"></button><div class="watch-info"><div class="watch-title">${w.title}</div><div class="watch-tags"><span class="badge">${categoryLabels[w.category]||'Film'}</span>${w.category==='serial'&&w.watching?'<span class="badge badge-watching">Sledujeme</span>':''}</div></div></div></div>`).join('');
-    if (highlightFirst) list.querySelector('.watch-row')?.classList.add('enter');
-    list.querySelectorAll('.watch-check').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();moveToRated(btn.dataset.check)}));
-    list.querySelectorAll('.watch-row').forEach(row=>{const id=row.dataset.id,item=watchlist.find(w=>w.id===id);bindSwipe(row,null,()=>askDelete('watch',id,item.title));});
-    updateHeader();
+    if(!watchlist.length){list.innerHTML='<div class="empty-state">Watchlist je prázdný. Přidej první tip tlačítkem dole.</div>';return;}
+    list.innerHTML=watchlist.map((w,i)=>`<div class="swipe-shell"><div class="swipe-hint edit"></div><div class="swipe-hint delete">${iconDelete}</div><div class="watch-row" data-index="${i}"><button class="watch-check" data-check="${i}" aria-label="Přesunout do hodnocených"></button><div class="watch-info"><div class="watch-title">${w.title}</div><div class="watch-tags"><span class="badge">${categoryLabels[w.category]||'Film'}</span>${w.category==='serial'&&w.watching?'<span class="badge badge-watching">Sledujeme</span>':''}</div></div></div></div>`).join('');
+    if(highlightFirst)list.querySelector('.watch-row')?.classList.add('enter');
+    list.querySelectorAll('.watch-check').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();moveToRated(+btn.dataset.check)}));
+    list.querySelectorAll('.watch-row').forEach(row=>{const i=+row.dataset.index;bindSwipe(row,null,()=>requestDelete('watch',i,watchlist[i].title));});
   }
-  function moveToRated(id) {
-    const index=watchlist.findIndex(w=>w.id===id), item=watchlist[index];
-    watchlist.splice(index,1); persist(); renderWatchlist(); resetAddForm();
-    document.getElementById('inpTitle').value=item.title; setCategoryUI(item.category);
-    overlay.classList.add('active'); addSheet.classList.add('active');
+  function moveToRated(index) {
+    const item = watchlist[index];
+    watchlist.splice(index, 1);
+    renderWatchlist();
+    resetAddForm();
+    document.getElementById('inpTitle').value = item.title;
+    setCategoryUI(item.category);
+    overlay.classList.add('active');
+    addSheet.classList.add('active');
   }
 
   // --- sheety ---
@@ -591,6 +540,7 @@
   const addSheet = document.getElementById('addSheet');
   const watchAddSheet = document.getElementById('watchAddSheet');
   const detailSheet = document.getElementById('detailSheet');
+  const confirmSheet = document.getElementById('confirmSheet');
 
   function closeSheets() {
     overlay.classList.remove('active');
@@ -612,7 +562,6 @@
     document.getElementById('valMe').textContent = '3.5';
     document.getElementById('valHer').textContent = '3.5';
     editingIndex = null;
-    document.getElementById('saveMovie').textContent = 'Uložit film';
   }
   function resetWatchForm() {
     document.getElementById('inpWatchTitle').value = '';
@@ -632,6 +581,7 @@
     tabWatch.classList.toggle('active', tab === 'watch');
     viewRated.classList.toggle('active', tab === 'rated');
     viewWatchlist.classList.toggle('active', tab === 'watch');
+    fab.textContent = tab === 'rated' ? '+ Přidat film' : '+ Přidat na watchlist';
   }
   tabRated.addEventListener('click', () => setTab('rated'));
   tabWatch.addEventListener('click', () => setTab('watch'));
@@ -649,8 +599,8 @@
       title,
       category: selectedCategory,
       poster: document.getElementById('inpPoster').value.trim(),
-      me: parseFloat(rMe.value),
-      her: parseFloat(rHer.value),
+      me: Math.round(parseFloat(rMe.value) * 2),
+      her: Math.round(parseFloat(rHer.value) * 2),
       note: document.getElementById('inpNote').value.trim()
     };
     if (editingIndex !== null) {
@@ -660,7 +610,6 @@
       movies.unshift(data);
       renderList(true);
     }
-    persist();
     resetAddForm();
     closeSheets();
   });
@@ -673,7 +622,6 @@
       category: selectedWatchCategory,
       watching: selectedWatchCategory === 'serial' && inpWatching.checked
     });
-    persist();
     resetWatchForm();
     renderWatchlist(true);
     closeSheets();
@@ -686,42 +634,22 @@
     posterEl.style.background = m.poster ? `url('${m.poster}') center/cover` : posterFallback[index % posterFallback.length];
     document.getElementById('detailTitle').textContent = m.title;
     document.getElementById('detailBadge').textContent = categoryLabels[m.category] || 'Film';
-    document.getElementById('detailMe').textContent = Number(m.me).toFixed(1);
-    document.getElementById('detailHer').textContent = Number(m.her).toFixed(1);
-    document.getElementById('detailMatch').textContent = Math.round(100 - Math.abs(m.me-m.her)/5*100) + ' %';
+    document.getElementById('detailMe').textContent = m.me;
+    document.getElementById('detailHer').textContent = m.her;
     document.getElementById('detailNote').textContent = m.note || 'Bez poznámky.';
     overlay.classList.add('active');
     detailSheet.classList.add('active');
   }
 
-  function openEdit(index) {
-    const m = movies[index];
-    editingIndex = index;
-    document.getElementById('inpTitle').value = m.title;
-    document.getElementById('inpPoster').value = m.poster;
-    document.getElementById('inpNote').value = m.note;
-    setCategoryUI(m.category);
-    const meVal = m.me, herVal = m.her;
-    rMe.value = meVal; rHer.value = herVal;
-    updateStarSlider('starMe', meVal); updateStarSlider('starHer', herVal);
-    document.getElementById('valMe').textContent = meVal;
-    document.getElementById('valHer').textContent = herVal;
-    document.getElementById('saveMovie').textContent = 'Uložit změny';
-    detailSheet.classList.remove('active');
-    confirmSheet.classList.remove('active');
-    addSheet.classList.add('active');
-  }
-  document.getElementById('editMovie').addEventListener('click', () => { if (currentDetailIndex !== null) openEdit(currentDetailIndex); });
+  document.getElementById('editMovie').addEventListener('click', () => { if(currentDetailIndex!==null) openEditAt(currentDetailIndex); });
 
 
-  document.getElementById('cancelDelete').addEventListener('click', closeSheets);
-  document.getElementById('confirmDelete').addEventListener('click', () => {
-    if (!pendingDelete) return;
-    if (pendingDelete.type === 'movie') movies = movies.filter(m => m.id !== pendingDelete.id);
-    else watchlist = watchlist.filter(w => w.id !== pendingDelete.id);
-    pendingDelete = null; persist(); renderList(); renderWatchlist(); closeSheets();
+  document.getElementById('cancelDelete').addEventListener('click',closeSheets);
+  document.getElementById('confirmDelete').addEventListener('click',()=>{
+    if(!pendingDelete)return;
+    if(pendingDelete.type==='movie')movies.splice(pendingDelete.index,1);else watchlist.splice(pendingDelete.index,1);
+    pendingDelete=null;renderList();renderWatchlist();closeSheets();
   });
-  updateHeader();
   renderList();
   renderWatchlist();
 </script>
