@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Filmovník</title>
 <style>
   :root {
@@ -249,6 +249,89 @@
   .suggestion-meta { display:block; margin-top:4px; color:var(--text-dim); font-size:11px; }
   .suggestion-empty { padding:12px; color:var(--text-dim); font-size:12px; }
 
+
+  #detailSheet.dragging { transition:none; overflow-y:hidden; }
+  #detailSheet .sheet-close { touch-action:none; cursor:grab; user-select:none; }
+  #detailSheet .sheet-close:active { cursor:grabbing; }
+
+
+  /* Mobile app shell: scrolluje jen aktivní seznam, ne celá stránka */
+  html, body { width:100%; height:100%; height:100dvh; overflow:hidden; overscroll-behavior:none; }
+  body { position:fixed; inset:0; touch-action:pan-x pan-y; }
+  .content { height:100dvh; max-width:480px; display:flex; flex-direction:column; overflow:hidden; padding:calc(18px + env(safe-area-inset-top)) 18px 0; }
+  header { flex:0 0 auto; padding:8px 4px 18px; }
+  .view { min-height:0; flex:1 1 auto; overflow-y:auto; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:calc(132px + env(safe-area-inset-bottom)); }
+  .view::-webkit-scrollbar { display:none; }
+  .view.active { display:block; }
+
+  /* Lehká mobilní navigace bez plného panelu */
+  .tabbar { max-width:480px; justify-content:center; gap:54px; padding:24px 24px calc(15px + env(safe-area-inset-bottom)); background:linear-gradient(to top,rgba(8,8,11,.98) 18%,rgba(8,8,11,.82) 48%,rgba(8,8,11,0)); border-top:0; pointer-events:none; }
+  .tab-btn { flex:0 0 56px; height:48px; justify-content:flex-end; gap:0; font-size:0; pointer-events:auto; filter:drop-shadow(0 4px 12px rgba(0,0,0,.45)); }
+  .tab-btn svg { width:28px; height:28px; }
+  .tab-btn.active svg { filter:drop-shadow(0 0 8px rgba(230,195,105,.24)); }
+
+  /* Větší a spolehlivější dotyková plocha hodnocení */
+  .star-slider { min-height:64px; display:flex; align-items:center; touch-action:none; user-select:none; -webkit-user-select:none; cursor:ew-resize; }
+  .stars-row { pointer-events:none; }
+  .star-cell { width:18%; max-height:58px; }
+  .star-input { pointer-events:none; height:64px; }
+
+
+  .header-summary { margin-top:6px; color:var(--text-dim); font-size:12px; font-family:system-ui,-apple-system,sans-serif; font-weight:500; letter-spacing:0; }
+
+  /* Bezpečná vzdálenost FAB od home indikátoru */
+  .fab { bottom:calc(92px + env(safe-area-inset-bottom)); }
+
+  /* Uzamčení seznamu, když je otevřený sheet */
+  body.sheet-open .view { overflow:hidden !important; touch-action:none; }
+
+  /* Krátké potvrzení po uložení */
+  .save-toast { position:fixed; left:50%; bottom:calc(74px + env(safe-area-inset-bottom)); z-index:15; transform:translate(-50%,14px); padding:9px 14px; border:1px solid rgba(199,173,110,.18); border-radius:999px; background:rgba(27,27,33,.92); color:var(--gold-bright); font-size:12px; font-weight:650; opacity:0; pointer-events:none; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); transition:opacity .18s ease,transform .22s ease; box-shadow:0 8px 24px rgba(0,0,0,.28); }
+  .save-toast.show { opacity:1; transform:translate(-50%,0); }
+
+  /* Skeleton výsledky TMDB */
+  .suggestion-skeleton { display:flex; align-items:center; gap:10px; padding:9px 10px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .suggestion-skeleton:last-child { border-bottom:0; }
+  .skeleton-poster,.skeleton-line { background:linear-gradient(100deg,#25252c 20%,#303038 38%,#25252c 56%); background-size:220% 100%; animation:skeletonPulse 1.15s ease-in-out infinite; }
+  .skeleton-poster { width:32px; height:48px; flex:0 0 auto; border-radius:5px; }
+  .skeleton-copy { flex:1; }
+  .skeleton-line { height:9px; border-radius:5px; margin:4px 0; }
+  .skeleton-line.short { width:48%; }
+  @keyframes skeletonPulse { to { background-position:-120% 0; } }
+  @media (prefers-reduced-motion:reduce) { .skeleton-poster,.skeleton-line { animation:none; } }
+
+
+  /* Subtilní mobilní animace */
+  .view.view-exit-left { animation:viewExitLeft .14s ease both; }
+  .view.view-exit-right { animation:viewExitRight .14s ease both; }
+  .view.view-enter-left { animation:viewEnterLeft .18s cubic-bezier(.2,.75,.25,1) both; }
+  .view.view-enter-right { animation:viewEnterRight .18s cubic-bezier(.2,.75,.25,1) both; }
+  @keyframes viewExitLeft { to { opacity:0; transform:translateX(-10px); } }
+  @keyframes viewExitRight { to { opacity:0; transform:translateX(10px); } }
+  @keyframes viewEnterLeft { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:none; } }
+  @keyframes viewEnterRight { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:none; } }
+
+  .movie-row.card-press { animation:cardPress .15s ease both; }
+  @keyframes cardPress { 50% { transform:scale(.975); } 100% { transform:scale(1); } }
+
+  .movie-row.enter,.watch-row.enter { animation:newCardIn .24s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes newCardIn { from { opacity:0; transform:translateY(-8px) scale(.97); } to { opacity:1; transform:none; } }
+
+  .suggestion.suggestion-in { animation:suggestionIn .18s cubic-bezier(.2,.75,.25,1) both; }
+  @keyframes suggestionIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+
+  .save-toast::after { content:' ✓'; display:inline-block; animation:checkPop .24s cubic-bezier(.2,.9,.3,1.4) both; }
+  @keyframes checkPop { from { opacity:0; transform:scale(.3); } to { opacity:1; transform:scale(1); } }
+
+  #detailSheet.detail-opening { animation:detailSettle .28s cubic-bezier(.2,.82,.2,1) both; }
+  @keyframes detailSettle { from { opacity:.72; transform:translateY(26px); } to { opacity:1; transform:translateY(0); } }
+
+  @media (prefers-reduced-motion:reduce) {
+    .view.view-exit-left,.view.view-exit-right,.view.view-enter-left,.view.view-enter-right,
+    .movie-row.card-press,.movie-row.enter,.watch-row.enter,.suggestion.suggestion-in,
+    .save-toast::after,#detailSheet.detail-opening { animation:none !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -260,7 +343,7 @@
   </div>
 
   <div class="content">
-    <header><h1>Filmovník</h1></header>
+    <header><div><h1>Filmovník</h1><div class="header-summary" id="headerSummary">0 hodnoceno • 0 ve watchlistu</div></div></header>
 
     <div class="view active" id="viewRated">
       <div class="movie-list" id="movieList"></div>
@@ -272,6 +355,8 @@
   </div>
 
   <button class="fab" id="openAdd">+ Přidat film</button>
+
+  <div class="save-toast" id="saveToast" role="status" aria-live="polite">Uloženo</div>
 
   <div class="tabbar">
     <button class="tab-btn active" id="tabRated">
@@ -380,6 +465,11 @@
   </div>
 </div>
 <script>
+
+  function haptic(pattern = 8) {
+    try { if ('vibrate' in navigator) navigator.vibrate(pattern); } catch (e) {}
+  }
+
 
   const TMDB_API_KEY = '0899dead6866fb139e5cb434f0863ab5';
   const TMDB_BASE = 'https://api.themoviedb.org/3';
@@ -501,16 +591,51 @@
     const cell = row.querySelectorAll('.star-cell')[idx];
     cell.classList.remove('tap'); void cell.offsetWidth; cell.classList.add('tap');
   }
-  rMe.addEventListener('input', () => {
-    updateStarSlider('starMe', parseFloat(rMe.value));
-    document.getElementById('valMe').textContent = rMe.value;
-    tap('starMe', parseFloat(rMe.value));
-  });
-  rHer.addEventListener('input', () => {
-    updateStarSlider('starHer', parseFloat(rHer.value));
-    document.getElementById('valHer').textContent = rHer.value;
-    tap('starHer', parseFloat(rHer.value));
-  });
+  function bindPreciseStarSlider(input, containerId, valueId) {
+    const slider=input.closest('.star-slider');
+    let dragging=false;
+    let lastValue=Number(input.value);
+
+    function setFromPointer(event) {
+      const rect=slider.getBoundingClientRect();
+      const ratio=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
+      const value=Math.max(0.5,Math.min(5,Math.round((ratio*5)*2)/2));
+      if (value===Number(input.value)) return;
+      input.value=String(value);
+      updateStarSlider(containerId,value);
+      document.getElementById(valueId).textContent=value.toFixed(1);
+      tap(containerId,value);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      if (value!==lastValue) { haptic(5); lastValue=value; }
+    }
+
+    slider.addEventListener('pointerdown',event=>{
+      dragging=true;
+      slider.setPointerCapture(event.pointerId);
+      setFromPointer(event);
+      event.preventDefault();
+    });
+    slider.addEventListener('pointermove',event=>{
+      if(!dragging)return;
+      setFromPointer(event);
+      event.preventDefault();
+    });
+    const finish=event=>{
+      if(!dragging)return;
+      dragging=false;
+      if(slider.hasPointerCapture(event.pointerId))slider.releasePointerCapture(event.pointerId);
+      haptic(10);
+    };
+    slider.addEventListener('pointerup',finish);
+    slider.addEventListener('pointercancel',finish);
+    input.addEventListener('keydown',()=>window.setTimeout(()=>{
+      const value=Number(input.value);
+      updateStarSlider(containerId,value);
+      document.getElementById(valueId).textContent=value.toFixed(1);
+    },0));
+  }
+  bindPreciseStarSlider(rMe,'starMe','valMe');
+  bindPreciseStarSlider(rHer,'starHer','valHer');
 
   // --- kategorie: hodnocené sheet ---
   const categoryLabels = { film: 'Film', serial: 'Seriál' };
@@ -571,7 +696,7 @@
     const shell=row.closest('.swipe-shell'), editHint=shell.querySelector('.swipe-hint.edit'), deleteHint=shell.querySelector('.swipe-hint.delete');
     row.addEventListener('touchstart', e=>{ if(e.touches.length!==1)return; sx=e.touches[0].clientX; sy=e.touches[0].clientY; dx=0; tracking=true; horizontal=false; row.style.transition='none'; },{passive:true});
     row.addEventListener('touchmove', e=>{ if(!tracking)return; const x=e.touches[0].clientX-sx,y=e.touches[0].clientY-sy; if(!horizontal && Math.abs(x)>8) horizontal=Math.abs(x)>Math.abs(y); if(!horizontal)return; e.preventDefault(); dx=Math.max(-105,Math.min(105,x)); if(!onEdit&&dx>0)dx=0; row.style.transform=`translateX(${dx}px)`; editHint.style.opacity=dx>8?Math.min(1,(dx-8)/55):0; deleteHint.style.opacity=dx<-8?Math.min(1,(-dx-8)/55):0; },{passive:false});
-    row.addEventListener('touchend', ()=>{ if(!tracking)return; tracking=false; row.style.transition='transform .24s cubic-bezier(.2,.8,.2,1)'; row.style.transform=''; editHint.style.opacity=0; deleteHint.style.opacity=0; if(Math.abs(dx)>15)suppressClick=true; if(dx>70&&onEdit)onEdit(); if(dx<-70&&onDelete)onDelete(); setTimeout(()=>suppressClick=false,280); });
+    row.addEventListener('touchend', ()=>{ if(!tracking)return; tracking=false; row.style.transition='transform .24s cubic-bezier(.2,.8,.2,1)'; row.style.transform=''; editHint.style.opacity=0; deleteHint.style.opacity=0; if(Math.abs(dx)>15)suppressClick=true; if(dx>70&&onEdit){haptic(12);onEdit();} if(dx<-70&&onDelete){haptic([10,35,10]);onDelete();} setTimeout(()=>suppressClick=false,280); });
     row.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation();}},true);
   }
   function requestDelete(type,index,title){ pendingDelete={type,index}; document.getElementById('confirmText').textContent=`Opravdu chceš smazat „${title}“?`; overlay.classList.add('active'); confirmSheet.classList.add('active'); }
@@ -591,7 +716,7 @@
     if(!movies.length){list.innerHTML='<div class="empty-state">Zatím žádné filmy. Přidej první tlačítkem dole.</div>';return;}
     list.innerHTML=movies.map((m,i)=>{const bg=m.poster?`background-image:url('${m.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;return `<div class="swipe-shell"><div class="swipe-hint edit">${iconEdit}</div><div class="swipe-hint delete">${iconDelete}</div><div class="movie-row" data-index="${i}"><div class="poster" style="${bg}"></div><div class="movie-info"><h3>${m.title}</h3><span class="badge">${categoryLabels[m.category]||'Film'}</span><div class="ratings"><span class="compact-rating">${(m.me/2).toFixed(1)} ★<span class="rating-name">Bruno</span></span><span class="compact-rating">${(m.her/2).toFixed(1)} ★<span class="rating-name">Zuzi</span></span></div></div></div></div>`}).join('');
     if(highlightFirst)list.querySelector('.movie-row')?.classList.add('enter');
-    list.querySelectorAll('.movie-row').forEach(row=>{const i=+row.dataset.index;row.addEventListener('click',()=>openDetail(i));bindSwipe(row,()=>openEditAt(i),()=>requestDelete('movie',i,movies[i].title));});
+    list.querySelectorAll('.movie-row').forEach(row=>{const i=+row.dataset.index;row.addEventListener('click',()=>{row.classList.remove('card-press');void row.offsetWidth;row.classList.add('card-press');setTimeout(()=>openDetail(i),95);});bindSwipe(row,()=>openEditAt(i),()=>requestDelete('movie',i,movies[i].title));});
   }
   function renderWatchlist(highlightFirst) {
     const list=document.getElementById('watchlistList');
@@ -609,6 +734,7 @@
     const item = watchlist[index];
     watchlist.splice(index, 1);
     renderWatchlist();
+    updateHeaderSummary();
     resetAddForm();
     document.getElementById('inpTitle').value = item.title;
     document.getElementById('inpPoster').value = item.poster || '';
@@ -626,8 +752,10 @@
   const watchAddSheet = document.getElementById('watchAddSheet');
   const detailSheet = document.getElementById('detailSheet');
   const confirmSheet = document.getElementById('confirmSheet');
+  new MutationObserver(() => setSheetLock(overlay.classList.contains('active'))).observe(overlay,{attributes:true,attributeFilter:['class']});
 
   function closeSheets() {
+    setSheetLock(false);
     overlay.classList.remove('active');
     addSheet.classList.remove('active');
     watchAddSheet.classList.remove('active');
@@ -636,6 +764,70 @@
   }
   overlay.addEventListener('click', closeSheets);
   document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', closeSheets));
+
+
+  // Detail lze stáhnout dolů přímo za horní šipku.
+  (function enableDetailPullDown() {
+    const handle = detailSheet.querySelector('.sheet-close');
+    let startY = 0;
+    let currentY = 0;
+    let dragging = false;
+
+    function resetDetailPosition() {
+      detailSheet.classList.remove('dragging');
+      detailSheet.style.transform = '';
+      overlay.style.opacity = '';
+    }
+
+    handle.addEventListener('pointerdown', event => {
+      if (!detailSheet.classList.contains('active')) return;
+      dragging = true;
+      startY = event.clientY;
+      currentY = 0;
+      detailSheet.classList.add('dragging');
+      handle.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+
+    handle.addEventListener('pointermove', event => {
+      if (!dragging) return;
+      currentY = Math.max(0, event.clientY - startY);
+      detailSheet.style.transform = `translateY(${currentY}px)`;
+      const fade = Math.max(0, 1 - currentY / 320);
+      overlay.style.opacity = String(fade);
+      event.preventDefault();
+    });
+
+    function finishPullDown(event) {
+      if (!dragging) return;
+      dragging = false;
+      if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+      detailSheet.classList.remove('dragging');
+
+      if (currentY > 110) {
+        detailSheet.style.transition = 'transform .22s cubic-bezier(.4,0,1,1)';
+        detailSheet.style.transform = 'translateY(100%)';
+        overlay.style.opacity = '0';
+        window.setTimeout(() => {
+          closeSheets();
+          detailSheet.style.transition = '';
+          resetDetailPosition();
+        }, 220);
+      } else {
+        detailSheet.style.transition = 'transform .24s cubic-bezier(.32,.72,0,1)';
+        detailSheet.style.transform = 'translateY(0)';
+        overlay.style.opacity = '';
+        window.setTimeout(() => {
+          detailSheet.style.transition = '';
+          detailSheet.style.transform = '';
+        }, 240);
+      }
+      currentY = 0;
+    }
+
+    handle.addEventListener('pointerup', finishPullDown);
+    handle.addEventListener('pointercancel', finishPullDown);
+  })();
 
   function resetAddForm() {
     document.getElementById('inpTitle').value = '';
@@ -698,13 +890,13 @@
     const run=debounce(async()=>{
       const query=input.value.trim(), current=++requestNo;
       if(query.length<2){close();return;}
-      list.innerHTML='<div class="suggestion-empty">Hledám…</div>'; list.classList.add('active');
+      list.innerHTML=Array.from({length:3},()=>'<div class="suggestion-skeleton"><span class="skeleton-poster"></span><span class="skeleton-copy"><span class="skeleton-line"></span><span class="skeleton-line short"></span></span></div>').join(''); list.classList.add('active');
       try {
         const found=await searchTmdbSuggestions(query,getCategory());
         if(current!==requestNo)return;
         results=found;
         if(!found.length){list.innerHTML='<div class="suggestion-empty">Nic nenalezeno</div>';return;}
-        list.innerHTML=found.map((item,i)=>`<button type="button" class="suggestion" data-i="${i}"><span class="suggestion-poster" style="${item.poster?`background-image:url('${item.poster}')`:''}"></span><span class="suggestion-info"><span class="suggestion-title">${item.title}</span><span class="suggestion-meta">${[item.year,item.originalTitle&&item.originalTitle!==item.title?item.originalTitle:''].filter(Boolean).join(' • ')}</span></span></button>`).join('');
+        list.innerHTML=found.map((item,i)=>`<button type="button" class="suggestion suggestion-in" style="animation-delay:${i*28}ms" data-i="${i}"><span class="suggestion-poster" style="${item.poster?`background-image:url('${item.poster}')`:''}"></span><span class="suggestion-info"><span class="suggestion-title">${item.title}</span><span class="suggestion-meta">${[item.year,item.originalTitle&&item.originalTitle!==item.title?item.originalTitle:''].filter(Boolean).join(' • ')}</span></span></button>`).join('');
         list.querySelectorAll('.suggestion').forEach(btn=>btn.addEventListener('pointerdown',e=>{e.preventDefault();choose(results[+btn.dataset.i]);}));
       } catch(e) { if(current===requestNo) list.innerHTML='<div class="suggestion-empty">Našeptávání se nepodařilo načíst</div>'; }
     });
@@ -730,6 +922,26 @@
   const watchAutocomplete=setupAutocomplete('inpWatchTitle','watchSuggestions',()=>selectedWatchCategory,()=>{});
 
   document.getElementById('inpTitle').addEventListener('blur', () => loadTmdbData(document.getElementById('inpTitle').value.trim(), selectedCategory));
+
+  const scrollPositions = { rated: 0, watch: 0 };
+  let toastTimer = null;
+  function updateHeaderSummary() {
+    document.getElementById('headerSummary').textContent = `${movies.length} hodnoceno • ${watchlist.length} ve watchlistu`;
+  }
+  function showSavedToast(message = 'Uloženo') {
+    const toast=document.getElementById('saveToast');
+    toast.textContent=message;
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    haptic(10);
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>toast.classList.remove('show'),1500);
+  }
+  function setSheetLock(locked) {
+    document.body.classList.toggle('sheet-open',locked);
+  }
+
   // --- taby ---
   const tabRated = document.getElementById('tabRated');
   const tabWatch = document.getElementById('tabWatch');
@@ -737,16 +949,29 @@
   const viewWatchlist = document.getElementById('viewWatchlist');
   const fab = document.getElementById('openAdd');
   let activeTab = 'rated';
+  let tabAnimating = false;
   function setTab(tab) {
-    activeTab = tab;
-    tabRated.classList.toggle('active', tab === 'rated');
-    tabWatch.classList.toggle('active', tab === 'watch');
-    viewRated.classList.toggle('active', tab === 'rated');
-    viewWatchlist.classList.toggle('active', tab === 'watch');
-    fab.textContent = tab === 'rated' ? '+ Přidat film' : '+ Přidat na watchlist';
+    if (tab === activeTab || tabAnimating) return;
+    tabAnimating = true;
+    const oldTab=activeTab;
+    const oldView=oldTab==='rated'?viewRated:viewWatchlist;
+    const newView=tab==='rated'?viewRated:viewWatchlist;
+    const goingRight=tab==='watch';
+    scrollPositions[oldTab]=oldView.scrollTop;
+    oldView.classList.add(goingRight?'view-exit-left':'view-exit-right');
+    window.setTimeout(()=>{
+      oldView.classList.remove('active','view-exit-left','view-exit-right');
+      activeTab=tab;
+      tabRated.classList.toggle('active',tab==='rated');
+      tabWatch.classList.toggle('active',tab==='watch');
+      newView.classList.add('active',goingRight?'view-enter-right':'view-enter-left');
+      fab.textContent=tab==='rated'?'+ Přidat film':'+ Přidat na watchlist';
+      newView.scrollTop=scrollPositions[tab];
+      window.setTimeout(()=>{newView.classList.remove('view-enter-left','view-enter-right');tabAnimating=false;},190);
+    },140);
   }
-  tabRated.addEventListener('click', () => setTab('rated'));
-  tabWatch.addEventListener('click', () => setTab('watch'));
+  tabRated.addEventListener('click', () => { haptic(7); setTab('rated'); });
+  tabWatch.addEventListener('click', () => { haptic(7); setTab('watch'); });
 
   fab.addEventListener('click', () => {
     overlay.classList.add('active');
@@ -780,6 +1005,8 @@
     }
     resetAddForm();
     closeSheets();
+    updateHeaderSummary();
+    showSavedToast('Uloženo');
   });
 
   document.getElementById('saveWatch').addEventListener('click', async () => {
@@ -799,6 +1026,8 @@
     resetWatchForm();
     renderWatchlist(true);
     closeSheets();
+    updateHeaderSummary();
+    showSavedToast('Uloženo do watchlistu');
   });
 
   function openDetail(index) {
@@ -815,7 +1044,11 @@
     document.getElementById('detailDescription').style.display = m.description ? 'block' : 'none';
     document.getElementById('detailNote').textContent = m.note || 'Bez poznámky.';
     overlay.classList.add('active');
+    detailSheet.classList.remove('detail-opening');
     detailSheet.classList.add('active');
+    void detailSheet.offsetWidth;
+    detailSheet.classList.add('detail-opening');
+    setTimeout(()=>detailSheet.classList.remove('detail-opening'),300);
   }
 
   document.getElementById('editMovie').addEventListener('click', () => { if(currentDetailIndex!==null) openEditAt(currentDetailIndex); });
@@ -825,10 +1058,11 @@
   document.getElementById('confirmDelete').addEventListener('click',()=>{
     if(!pendingDelete)return;
     if(pendingDelete.type==='movie')movies.splice(pendingDelete.index,1);else watchlist.splice(pendingDelete.index,1);
-    pendingDelete=null;renderList();renderWatchlist();closeSheets();
+    pendingDelete=null;renderList();renderWatchlist();updateHeaderSummary();closeSheets();
   });
   renderList();
   renderWatchlist();
+  updateHeaderSummary();
 </script>
 
 </body>
