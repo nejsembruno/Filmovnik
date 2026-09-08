@@ -265,7 +265,7 @@
   .view.active { display:block; }
 
   /* Lehká mobilní navigace bez plného panelu */
-  .tabbar { max-width:480px; justify-content:center; gap:54px; padding:24px 24px calc(15px + env(safe-area-inset-bottom)); background:linear-gradient(to top,rgba(8,8,11,.98) 18%,rgba(8,8,11,.82) 48%,rgba(8,8,11,0)); border-top:0; pointer-events:none; }
+  .tabbar { max-width:480px; justify-content:center; gap:30px; padding:24px 24px calc(15px + env(safe-area-inset-bottom)); background:linear-gradient(to top,rgba(8,8,11,.98) 18%,rgba(8,8,11,.82) 48%,rgba(8,8,11,0)); border-top:0; pointer-events:none; }
   .tab-btn { flex:0 0 56px; height:48px; justify-content:flex-end; gap:0; font-size:0; pointer-events:auto; filter:drop-shadow(0 4px 12px rgba(0,0,0,.45)); }
   .tab-btn svg { width:28px; height:28px; }
   .tab-btn.active svg { filter:drop-shadow(0 0 8px rgba(230,195,105,.24)); }
@@ -336,6 +336,47 @@
   .suggestions { max-height:min(330px,42vh); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
   .suggestion { min-height:66px; touch-action:manipulation; }
 
+
+  .brand { display:flex; align-items:center; gap:9px; min-width:0; }
+  .brand-copy { min-width:0; }
+  .brand-logo { width:32px; height:32px; flex:0 0 32px; display:block; color:var(--text); align-self:flex-start; margin-top:3px; }
+
+
+  /* Síň slávy: jednoduchá a intuitivní */
+  .hall-view { padding-top:2px; }
+  .hall-heading { margin:4px 2px 16px; }
+  .hall-heading h2 { color:#f4f4f6; font:700 21px/1.15 'Courier New',monospace; }
+  .hall-heading p { color:#9b9ca6; font-size:12px; margin-top:5px; }
+  .hall-winner { width:100%; display:grid; grid-template-columns:68px minmax(0,1fr) auto; align-items:center; gap:13px; padding:12px; border:1px solid rgba(255,255,255,.09); border-radius:15px; background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(22,22,28,.94)); color:inherit; text-align:left; opacity:0; transform:translateY(10px) scale(.985); }
+  .hall-view.hall-animate .hall-winner { animation:hallWinnerIn .36s cubic-bezier(.2,.84,.25,1) forwards; }
+  .hall-winner-poster { width:68px; aspect-ratio:2/3; border-radius:9px; background:#202027 center/cover no-repeat; box-shadow:0 8px 22px rgba(0,0,0,.34); }
+  .hall-winner-copy { min-width:0; }
+  .hall-kicker { display:block; color:#a8a9b2; font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
+  .hall-winner-title { display:block; margin-top:5px; color:#f4f4f6; font-size:16px; font-weight:750; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hall-winner-score { display:block; margin-top:7px; color:#c7c9ff; font-size:14px; font-weight:750; }
+  .hall-crown { width:24px; height:24px; display:block; color:#c7c9ff; flex:0 0 24px; }
+  .hall-crown svg { width:100%; height:100%; display:block; }
+  .hall-section-title { margin:20px 2px 9px; color:#a8a9b2; font-size:10px; font-weight:750; letter-spacing:.09em; text-transform:uppercase; }
+  .hall-ranking,.hall-insights { display:grid; gap:8px; }
+  .hall-rank-row,.hall-highlight { width:100%; display:flex; align-items:center; gap:11px; min-height:62px; padding:9px 11px; border:1px solid rgba(255,255,255,.06); border-radius:12px; background:rgba(22,22,28,.88); color:inherit; text-align:left; opacity:0; transform:translateY(8px); }
+  .hall-view.hall-animate .hall-rank-row,.hall-view.hall-animate .hall-highlight { animation:hallRowIn .28s ease forwards; }
+  .hall-view.hall-animate .hall-rank-row:nth-child(1) { animation-delay:.06s; }
+  .hall-view.hall-animate .hall-rank-row:nth-child(2) { animation-delay:.1s; }
+  .hall-view.hall-animate .hall-highlight:nth-child(1) { animation-delay:.15s; }
+  .hall-view.hall-animate .hall-highlight:nth-child(2) { animation-delay:.19s; }
+  .hall-view.hall-animate .hall-highlight:nth-child(3) { animation-delay:.23s; }
+  .hall-view.hall-animate .hall-highlight:nth-child(4) { animation-delay:.27s; }
+  .hall-rank-number { width:22px; flex:0 0 22px; color:#9b9ca6; font:700 14px/1 'Courier New',monospace; text-align:center; }
+  .hall-mini-poster { width:34px; aspect-ratio:2/3; flex:0 0 34px; border-radius:5px; background:#202027 center/cover no-repeat; }
+  .hall-copy { min-width:0; flex:1; }
+  .hall-label { color:#9b9ca6; font-size:10px; }
+  .hall-name { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#ececef; font-size:13px; font-weight:650; margin-top:2px; }
+  .hall-value { color:#c7c9ff; font-size:12px; font-weight:750; white-space:nowrap; }
+  .hall-icon { width:30px; height:30px; flex:0 0 30px; display:grid; place-items:center; border-radius:50%; background:rgba(199,201,255,.09); color:#c7c9ff; font-size:13px; font-weight:750; }
+  .hall-empty { padding:74px 22px; text-align:center; color:#9b9ca6; line-height:1.55; }
+  @keyframes hallWinnerIn { to { opacity:1; transform:none; } }
+  @keyframes hallRowIn { to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion:reduce) { .hall-winner,.hall-rank-row,.hall-highlight { opacity:1; transform:none; animation:none!important; } }
 </style>
 </head>
 <body>
@@ -347,7 +388,16 @@
   </div>
 
   <div class="content">
-    <header><div><h1>Filmovník</h1><div class="header-summary" id="headerSummary">0 hodnoceno • 0 ve watchlistu</div></div></header>
+    <header>
+      <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 64 64" role="img" aria-label="Logo Filmovníku">
+          <path d="M32 18c-4.7 0-8.6-2.5-13.2-2.5C10.7 15.5 6 21.8 6 31c0 7.2 2.8 14.2 6.7 19 3 3.8 6.1 6.5 10.1 6.5 3.6 0 5.7-2.2 9.2-2.2s5.6 2.2 9.2 2.2c4 0 7.1-2.7 10.1-6.5 3.9-4.8 6.7-11.8 6.7-19 0-9.2-4.7-15.5-12.8-15.5C40.6 15.5 36.7 18 32 18Z" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M33.5 14.5c2.5-5.1 6.7-8.1 12-8.8-.4 5.2-3.2 9-7.8 11-1.5.6-2.9.8-4.2.7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M27.8 27.4 41.2 35 27.8 42.6Z" fill="var(--bg)" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+        </svg>
+        <div class="brand-copy"><h1>Filmovník</h1><div class="header-summary" id="headerSummary">0 hodnoceno • 0 ve watchlistu</div></div>
+      </div>
+    </header>
 
     <div class="view active" id="viewRated">
       <div class="movie-list" id="movieList"></div>
@@ -355,6 +405,10 @@
 
     <div class="view" id="viewWatchlist">
       <div class="watch-list" id="watchlistList"></div>
+    </div>
+
+    <div class="view hall-view" id="viewHall">
+      <div id="hallContent"></div>
     </div>
   </div>
 
@@ -370,6 +424,10 @@
     <button class="tab-btn" id="tabWatch">
       <svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 3h12v18l-6-4.2L6 21V3z" fill="currentColor"/></svg>
       Watchlist
+    </button>
+    <button class="tab-btn" id="tabHall" aria-label="Síň slávy">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M8 4h8v4c0 3-1.8 5-4 5s-4-2-4-5V4Z" fill="currentColor"/><path d="M8 6H5v1c0 2.4 1.3 4 4 4M16 6h3v1c0 2.4-1.3 4-4 4M12 13v4m-4 3h8m-6-3h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Síň slávy
     </button>
   </div>
 </div>
@@ -734,6 +792,36 @@
     list.querySelectorAll('.watch-check').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();moveToRated(+btn.dataset.check)}));
     list.querySelectorAll('.watch-row').forEach(row=>{const i=+row.dataset.index;bindSwipe(row,null,()=>requestDelete('watch',i,watchlist[i].title));});
   }
+  function renderHallOfFame() {
+    const root=document.getElementById('hallContent');
+    if(!root)return;
+    const eligible=movies.filter(m=>Number.isFinite(Number(m.me))&&Number.isFinite(Number(m.her)));
+    if(!eligible.length){root.innerHTML='<div class="hall-empty">Síň slávy se naplní po prvním společném hodnocení.</div>';return;}
+    const items=eligible.map(m=>({...m,sourceIndex:movies.indexOf(m),average:(Number(m.me)+Number(m.her))/4,difference:Math.abs(Number(m.me)-Number(m.her))/2}));
+    const ranked=[...items].sort((a,b)=>b.average-a.average||a.difference-b.difference||a.title.localeCompare(b.title,'cs'));
+    const winner=ranked[0];
+    const agreement=[...items].sort((a,b)=>a.difference-b.difference||b.average-a.average)[0];
+    const disagreement=[...items].sort((a,b)=>b.difference-a.difference||b.average-a.average)[0];
+    const bruno=[...items].sort((a,b)=>Number(b.me)-Number(a.me)||b.average-a.average)[0];
+    const zuzi=[...items].sort((a,b)=>Number(b.her)-Number(a.her)||b.average-a.average)[0];
+    const posterStyle=m=>m.poster?`background-image:url('${m.poster}')`:`background:${posterFallback[m.sourceIndex%posterFallback.length]}`;
+    const otherRanks=ranked.slice(1,3).map((m,index)=>`<button type="button" class="hall-rank-row" data-hall-index="${m.sourceIndex}"><span class="hall-rank-number">${index+2}.</span><span class="hall-mini-poster" style="${posterStyle(m)}"></span><span class="hall-copy"><span class="hall-name">${m.title}</span></span><span class="hall-value">${m.average.toFixed(1)} ★</span></button>`).join('');
+    const insights=[
+      ['=','Největší shoda',agreement,`${agreement.difference.toFixed(1)} rozdíl`],
+      ['↔','Největší rozpor',disagreement,`${disagreement.difference.toFixed(1)} rozdíl`],
+      ['B','Brunův favorit',bruno,`${(Number(bruno.me)/2).toFixed(1)} ★`],
+      ['Z','Zuzčin favorit',zuzi,`${(Number(zuzi.her)/2).toFixed(1)} ★`]
+    ].map(([icon,label,m,value])=>`<button type="button" class="hall-highlight" data-hall-index="${m.sourceIndex}"><span class="hall-icon">${icon}</span><span class="hall-copy"><span class="hall-label">${label}</span><span class="hall-name">${m.title}</span></span><span class="hall-value">${value}</span></button>`).join('');
+    root.innerHTML=`<div class="hall-heading"><h2>Síň slávy</h2><p>To nejlepší z vašich hodnocení</p></div><button type="button" class="hall-winner" data-hall-index="${winner.sourceIndex}"><span class="hall-winner-poster" style="${posterStyle(winner)}"></span><span class="hall-winner-copy"><span class="hall-kicker">Vítěz</span><span class="hall-winner-title">${winner.title}</span><span class="hall-winner-score">${winner.average.toFixed(1)} ★ společně</span></span><span class="hall-crown" aria-label="Vítěz"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 9.5 8.5 13 12 7l3.5 6L19 9.5 17.5 18h-11L5 9.5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 20h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span></button>${otherRanks?`<div class="hall-section-title">Další v pořadí</div><div class="hall-ranking">${otherRanks}</div>`:''}<div class="hall-section-title">Zajímavosti</div><div class="hall-insights">${insights}</div>`;
+    root.querySelectorAll('[data-hall-index]').forEach(button=>button.addEventListener('click',()=>{haptic(7);openDetail(Number(button.dataset.hallIndex));}));
+  }
+  function animateHallOfFame() {
+    const view=document.getElementById('viewHall');
+    view.classList.remove('hall-animate');
+    void view.offsetWidth;
+    view.classList.add('hall-animate');
+  }
+
   function moveToRated(index) {
     const item = watchlist[index];
     watchlist.splice(index, 1);
@@ -998,7 +1086,7 @@
   });
   const watchAutocomplete=setupAutocomplete('inpWatchTitle','watchSuggestions',()=>selectedWatchCategory,()=>{});
 
-  const scrollPositions = { rated: 0, watch: 0 };
+  const scrollPositions = { rated: 0, watch: 0, hall: 0 };
   let toastTimer = null;
   function updateHeaderSummary() {
     document.getElementById('headerSummary').textContent = `${movies.length} hodnoceno • ${watchlist.length} ve watchlistu`;
@@ -1020,18 +1108,24 @@
   // --- taby ---
   const tabRated = document.getElementById('tabRated');
   const tabWatch = document.getElementById('tabWatch');
+  const tabHall = document.getElementById('tabHall');
   const viewRated = document.getElementById('viewRated');
   const viewWatchlist = document.getElementById('viewWatchlist');
+  const viewHall = document.getElementById('viewHall');
   const fab = document.getElementById('openAdd');
   let activeTab = 'rated';
   let tabAnimating = false;
+  function getTabView(tab) {
+    return tab==='rated'?viewRated:tab==='watch'?viewWatchlist:viewHall;
+  }
   function setTab(tab) {
-    if (tab === activeTab || tabAnimating) return;
-    tabAnimating = true;
+    if(tab===activeTab||tabAnimating)return;
+    tabAnimating=true;
+    const order={rated:0,watch:1,hall:2};
     const oldTab=activeTab;
-    const oldView=oldTab==='rated'?viewRated:viewWatchlist;
-    const newView=tab==='rated'?viewRated:viewWatchlist;
-    const goingRight=tab==='watch';
+    const oldView=getTabView(oldTab);
+    const newView=getTabView(tab);
+    const goingRight=order[tab]>order[oldTab];
     scrollPositions[oldTab]=oldView.scrollTop;
     oldView.classList.add(goingRight?'view-exit-left':'view-exit-right');
     window.setTimeout(()=>{
@@ -1039,14 +1133,19 @@
       activeTab=tab;
       tabRated.classList.toggle('active',tab==='rated');
       tabWatch.classList.toggle('active',tab==='watch');
+      tabHall.classList.toggle('active',tab==='hall');
       newView.classList.add('active',goingRight?'view-enter-right':'view-enter-left');
-      fab.textContent=tab==='rated'?'+ Přidat film':'+ Přidat na watchlist';
+      fab.style.display=tab==='hall'?'none':'';
+      if(tab==='rated')fab.textContent='+ Přidat film';
+      if(tab==='watch')fab.textContent='+ Přidat na watchlist';
       newView.scrollTop=scrollPositions[tab];
+      if(tab==='hall'){renderHallOfFame();animateHallOfFame();}
       window.setTimeout(()=>{newView.classList.remove('view-enter-left','view-enter-right');tabAnimating=false;},190);
     },140);
   }
-  tabRated.addEventListener('click', () => { haptic(7); setTab('rated'); });
-  tabWatch.addEventListener('click', () => { haptic(7); setTab('watch'); });
+  tabRated.addEventListener('click',()=>{haptic(7);setTab('rated');});
+  tabWatch.addEventListener('click',()=>{haptic(7);setTab('watch');});
+  tabHall.addEventListener('click',()=>{haptic([7,24,7]);setTab('hall');});
 
   fab.addEventListener('click', () => {
     overlay.classList.add('active');
@@ -1081,6 +1180,7 @@
     resetAddForm();
     closeSheets();
     updateHeaderSummary();
+    renderHallOfFame();
     showSavedToast('Uloženo');
   });
 
@@ -1102,6 +1202,7 @@
     renderWatchlist(true);
     closeSheets();
     updateHeaderSummary();
+    renderHallOfFame();
     showSavedToast('Uloženo do watchlistu');
   });
 
@@ -1133,10 +1234,11 @@
   document.getElementById('confirmDelete').addEventListener('click',()=>{
     if(!pendingDelete)return;
     if(pendingDelete.type==='movie')movies.splice(pendingDelete.index,1);else watchlist.splice(pendingDelete.index,1);
-    pendingDelete=null;renderList();renderWatchlist();updateHeaderSummary();closeSheets();
+    pendingDelete=null;renderList();renderWatchlist();renderHallOfFame();updateHeaderSummary();closeSheets();
   });
   renderList();
   renderWatchlist();
+  renderHallOfFame();
   updateHeaderSummary();
 </script>
 
