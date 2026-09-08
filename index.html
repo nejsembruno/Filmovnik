@@ -834,6 +834,7 @@
   })();
 
   function resetAddForm() {
+    if(typeof ratedAutocomplete!=='undefined')ratedAutocomplete.close();
     document.getElementById('inpTitle').value = '';
     document.getElementById('inpPoster').value = '';
     document.getElementById('inpNote').value = '';
@@ -848,15 +849,16 @@
     editingIndex = null;
   }
   function resetWatchForm() {
+    if(typeof watchAutocomplete!=='undefined')watchAutocomplete.close();
     document.getElementById('inpWatchTitle').value = '';
     setWatchCategoryUI('film');
   }
 
 
-  function debounce(fn, wait=320) {
-    let timer;
-    const wrapped=(...args)=>{ clearTimeout(timer); timer=setTimeout(()=>fn(...args),wait); };
-    wrapped.cancel=()=>clearTimeout(timer);
+  function debounce(fn, wait=350) {
+    let timer=null;
+    const wrapped=(...args)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...args),wait);};
+    wrapped.cancel=()=>{clearTimeout(timer);timer=null;};
     return wrapped;
   }
 
@@ -864,13 +866,12 @@
     return String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
 
-  async function searchTmdbSuggestions(query, category, signal) {
-    if (query.trim().length < 2) return [];
+  async function searchTmdbSuggestions(query,category,signal) {
     const type=category==='serial'?'tv':'movie';
-    const response=await fetch(`${TMDB_BASE}/search/${type}?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ&query=${encodeURIComponent(query.trim())}&include_adult=false`,{signal});
-    if (!response.ok) throw new Error('suggestions');
+    const response=await fetch(`${TMDB_BASE}/search/${type}?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ&query=${encodeURIComponent(query)}&include_adult=false`,{signal});
+    if(!response.ok)throw new Error(`TMDB ${response.status}`);
     const data=await response.json();
-    return (data.results||[]).filter(item=>category==='serial'?item.name:item.title).slice(0,6).map(item=>{
+    return (data.results||[]).slice(0,6).map(item=>{
       const date=category==='serial'?item.first_air_date:item.release_date;
       return {
         tmdbId:item.id,
@@ -881,7 +882,7 @@
         genreIds:item.genre_ids||[],
         description:item.overview||''
       };
-    });
+    }).filter(item=>item.title);
   }
 
   function setupAutocomplete(inputId,listId,getCategory,onPick) {
@@ -889,55 +890,58 @@
     const list=document.getElementById(listId);
     const wrap=input.closest('.autocomplete-wrap');
     let results=[];
-    let activeIndex=-1;
-    let requestNumber=0;
     let controller=null;
-    let selecting=false;
+    let searchVersion=0;
+    let activeIndex=-1;
+    let ignoreNextFocus=false;
 
-    function close() {
-      requestNumber++;
-      controller?.abort();
-      controller=null;
+    function hideList() {
       list.classList.remove('active');
       list.innerHTML='';
-      results=[];
       activeIndex=-1;
     }
 
-    function renderSelection() {
-      list.querySelectorAll('.suggestion').forEach((button,index)=>button.classList.toggle('selected',index===activeIndex));
-      if(activeIndex>=0) list.querySelectorAll('.suggestion')[activeIndex]?.scrollIntoView({block:'nearest'});
+    function cancelSearch() {
+      searchVersion++;
+      controller?.abort();
+      controller=null;
+      search.cancel();
     }
 
-    async function choose(index) {
+    async function selectResult(index) {
       const item=results[index];
       if(!item)return;
-      selecting=true;
+      cancelSearch();
+      ignoreNextFocus=true;
       input.value=item.title;
-      close();
+      hideList();
       const category=getCategory();
       const type=category==='serial'?'tv':'movie';
       let genreMap={};
-      try { genreMap=await getTmdbGenres(type); } catch(e) {}
-      pendingTmdbData={query:item.title,category,tmdbId:item.tmdbId,poster:item.poster,genres:item.genreIds.map(id=>genreMap[id]).filter(Boolean),year:item.year,description:item.description};
+      try{genreMap=await getTmdbGenres(type);}catch(e){}
+      pendingTmdbData={
+        query:item.title,category,tmdbId:item.tmdbId,poster:item.poster,
+        genres:item.genreIds.map(id=>genreMap[id]).filter(Boolean),
+        year:item.year,description:item.description
+      };
       onPick(pendingTmdbData);
-      selecting=false;
-      input.focus({preventScroll:true});
+      input.blur();
+      window.setTimeout(()=>{ignoreNextFocus=false;},250);
+      haptic(8);
     }
 
-    async function executeSearch() {
+    async function performSearch() {
       const query=input.value.trim();
-      if(query.length<2){close();return;}
-      const current=++requestNumber;
+      if(query.length<2){cancelSearch();hideList();return;}
+      const version=++searchVersion;
       controller?.abort();
       controller=new AbortController();
       list.innerHTML=Array.from({length:3},()=>'<div class="suggestion-skeleton"><span class="skeleton-poster"></span><span class="skeleton-copy"><span class="skeleton-line"></span><span class="skeleton-line short"></span></span></div>').join('');
       list.classList.add('active');
-      try {
+      try{
         const found=await searchTmdbSuggestions(query,getCategory(),controller.signal);
-        if(current!==requestNumber)return;
+        if(version!==searchVersion)return;
         results=found;
-        activeIndex=-1;
         if(!found.length){list.innerHTML='<div class="suggestion-empty">Nic nenalezeno</div>';return;}
         list.innerHTML=found.map((item,index)=>{
           const title=escapeAutocompleteText(item.title);
@@ -946,32 +950,51 @@
           const poster=item.poster?`background-image:url('${item.poster}')`:'';
           return `<button type="button" class="suggestion suggestion-in" style="animation-delay:${index*28}ms" data-index="${index}"><span class="suggestion-poster" style="${poster}"></span><span class="suggestion-info"><span class="suggestion-title">${title}</span><span class="suggestion-meta">${meta}</span></span></button>`;
         }).join('');
-        list.querySelectorAll('.suggestion').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();choose(Number(button.dataset.index));}));
-      } catch(error) {
-        if(error.name==='AbortError'||current!==requestNumber)return;
+      }catch(error){
+        if(error.name==='AbortError'||version!==searchVersion)return;
         list.innerHTML='<div class="suggestion-empty">Našeptávání se nepodařilo načíst</div>';
       }
     }
 
-    const run=debounce(executeSearch);
-    input.addEventListener('input',()=>{ if(selecting)return; pendingTmdbData=null; run(); });
-    input.addEventListener('focus',()=>{ if(input.value.trim().length>=2&&!list.classList.contains('active'))run(); });
-    input.addEventListener('keydown',event=>{
-      if(event.key==='Escape'){close();return;}
-      if(!results.length)return;
-      if(event.key==='ArrowDown'){event.preventDefault();activeIndex=(activeIndex+1)%results.length;renderSelection();}
-      else if(event.key==='ArrowUp'){event.preventDefault();activeIndex=activeIndex<=0?results.length-1:activeIndex-1;renderSelection();}
-      else if(event.key==='Enter'&&activeIndex>=0){event.preventDefault();choose(activeIndex);}
+    const search=debounce(performSearch);
+    input.addEventListener('input',()=>{pendingTmdbData=null;search();});
+    input.addEventListener('focus',()=>{if(ignoreNextFocus)return;if(input.value.trim().length>=2)search();});
+
+    // Delegace je stabilnější než přidávat posluchač každému výsledku po každém renderu.
+    list.addEventListener('pointerdown',event=>{
+      const button=event.target.closest('.suggestion');
+      if(!button)return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectResult(Number(button.dataset.index));
     });
-    document.addEventListener('pointerdown',event=>{if(!wrap.contains(event.target))close();});
-    return {refresh:()=>{run.cancel();executeSearch();},close};
+
+    input.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){cancelSearch();hideList();return;}
+      if(!results.length)return;
+      if(event.key==='ArrowDown'){event.preventDefault();activeIndex=(activeIndex+1)%results.length;}
+      else if(event.key==='ArrowUp'){event.preventDefault();activeIndex=activeIndex<=0?results.length-1:activeIndex-1;}
+      else if(event.key==='Enter'&&activeIndex>=0){event.preventDefault();selectResult(activeIndex);return;}
+      else return;
+      list.querySelectorAll('.suggestion').forEach((button,index)=>button.classList.toggle('selected',index===activeIndex));
+      list.querySelectorAll('.suggestion')[activeIndex]?.scrollIntoView({block:'nearest'});
+    });
+
+    document.addEventListener('pointerdown',event=>{
+      if(!wrap.contains(event.target)){cancelSearch();hideList();}
+    });
+
+    return {
+      refresh:()=>{cancelSearch();if(input.value.trim().length>=2)performSearch();},
+      close:()=>{cancelSearch();hideList();}
+    };
   }
 
   const ratedAutocomplete=setupAutocomplete('inpTitle','titleSuggestions',()=>selectedCategory,data=>{
     if(data.poster)document.getElementById('inpPoster').value=data.poster;
     const status=document.getElementById('tmdbStatus');
     status.className='tmdb-status ok';
-    status.textContent=['Nalezeno',data.year,data.genres.join(' • ')].filter(Boolean).join(': ');
+    status.textContent=[data.year,data.genres.join(' • ')].filter(Boolean).join(' • ');
   });
   const watchAutocomplete=setupAutocomplete('inpWatchTitle','watchSuggestions',()=>selectedWatchCategory,()=>{});
 
