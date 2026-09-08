@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Filmář</title>
+<title>Filmovník</title>
 <style>
   :root {
     --bg: #08080b;
@@ -46,7 +46,7 @@
   .content { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 28px 18px 130px; }
 
   header { display: flex; align-items: center; gap: 16px; padding: 12px 4px 26px; }
-  header h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
+  header h1 { font-family: 'Courier New', Courier, monospace; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
 
   .view { display: none; }
   .view.active { display: block; }
@@ -200,18 +200,54 @@
   }
 
   .detail-poster {
-    width: 100%; aspect-ratio: 2/3; max-height: 320px; border-radius: 14px;
-    background-size: cover; background-position: center; background-color: #1e1e24; margin-bottom: 16px;
+    width: min(62vw, 220px); aspect-ratio: 2/3; border-radius: 14px;
+    background-size: cover; background-position: center; background-color: #1e1e24; margin: 0 auto 18px;
   }
   .detail-title { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
   .detail-ratings { display: flex; gap: 24px; margin-bottom: 16px; }
   .detail-ratings .rating strong { font-size: 20px; }
   .detail-note { font-size: 14px; color: var(--text-dim); line-height: 1.5; }
 
-  .tmdb-status { min-height: 18px; margin-top: 7px; color: var(--text-dim); font-size: 11px; line-height: 1.4; }
-  .tmdb-status.ok { color: var(--gold-bright); }
-  .detail-meta { color: var(--text-dim); font-size: 12px; line-height: 1.5; margin: -5px 0 14px; }
-  .detail-description { color: var(--text-dim); font-size: 13px; line-height: 1.55; margin: 0 0 16px; }
+  /* Mobile swipe actions */
+  .swipe-shell { position:relative; overflow:hidden; border-radius:14px; }
+  .swipe-hint { position:absolute; inset:0; display:flex; align-items:center; opacity:0; pointer-events:none; transition:opacity .12s ease; }
+  .swipe-hint.edit { justify-content:flex-start; padding-left:20px; color:var(--gold-bright); background:linear-gradient(90deg,rgba(199,173,110,.16),rgba(199,173,110,.04) 48%,transparent 75%); }
+  .swipe-hint.delete { justify-content:flex-end; padding-right:20px; color:#d58a90; background:linear-gradient(270deg,rgba(163,60,68,.17),rgba(163,60,68,.04) 48%,transparent 75%); }
+  .swipe-hint svg { width:19px; height:19px; }
+  .swipe-shell .movie-row,.swipe-shell .watch-row { position:relative; z-index:1; width:100%; touch-action:pan-y; will-change:transform; }
+  .compact-rating { display:inline-flex; align-items:center; gap:4px; color:var(--gold-bright); font-size:14px; font-weight:700; }
+  .compact-rating .rating-name { color:var(--text-dim); font-size:11px; font-weight:500; margin-left:2px; }
+  .confirm-sheet { text-align:center; }
+  .confirm-sheet h2 { font-size:19px; margin:4px 0 8px; }
+  .confirm-sheet p { color:var(--text-dim); font-size:13px; line-height:1.45; margin-bottom:18px; }
+  .confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .confirm-actions button { min-height:46px; border-radius:12px; font:600 14px inherit; }
+  .confirm-cancel { background:#1b1b21; color:var(--text); border:1px solid var(--card-border); }
+  .confirm-delete { background:rgba(163,60,68,.14); color:#e2a0a5; border:1px solid rgba(163,60,68,.22); }
+
+
+  .tmdb-status { min-height:18px; margin-top:7px; color:var(--text-dim); font-size:11px; line-height:1.4; }
+  .tmdb-status.ok { color:var(--gold-bright); }
+  .detail-meta { color:var(--text-dim); font-size:12px; line-height:1.5; margin:7px 0 14px; }
+  .detail-description { color:var(--text-dim); font-size:13px; line-height:1.55; margin-bottom:16px; }
+
+
+  .watch-poster { width:42px; height:63px; border-radius:7px; flex-shrink:0; background-size:cover; background-position:center; background-color:#1e1e24; }
+  .watch-meta { color:var(--text-dim); font-size:11px; line-height:1.35; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .detail-ratings .rating strong { display:inline-flex; align-items:center; gap:4px; color:var(--gold-bright); }
+
+
+  .autocomplete-wrap { position:relative; }
+  .suggestions { position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:30; display:none; overflow:hidden; background:#1b1b21; border:1px solid rgba(255,255,255,.09); border-radius:12px; box-shadow:0 14px 34px rgba(0,0,0,.42); }
+  .suggestions.active { display:block; }
+  .suggestion { width:100%; display:flex; align-items:center; gap:10px; padding:9px 10px; border:0; border-bottom:1px solid rgba(255,255,255,.05); background:transparent; color:var(--text); text-align:left; font-family:inherit; }
+  .suggestion:last-child { border-bottom:0; }
+  .suggestion:active,.suggestion.selected { background:rgba(199,173,110,.10); }
+  .suggestion-poster { width:32px; height:48px; flex:0 0 auto; border-radius:5px; background:#25252c center/cover no-repeat; }
+  .suggestion-info { min-width:0; flex:1; }
+  .suggestion-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; font-weight:600; }
+  .suggestion-meta { display:block; margin-top:4px; color:var(--text-dim); font-size:11px; }
+  .suggestion-empty { padding:12px; color:var(--text-dim); font-size:12px; }
 
 </style>
 </head>
@@ -224,7 +260,7 @@
   </div>
 
   <div class="content">
-    <header><h1>Filmář</h1></header>
+    <header><h1>Filmovník</h1></header>
 
     <div class="view active" id="viewRated">
       <div class="movie-list" id="movieList"></div>
@@ -259,7 +295,7 @@
 
   <div class="field">
     <label>Název</label>
-    <input type="text" id="inpTitle" placeholder="např. Perfect Days">
+    <div class="autocomplete-wrap"><input type="text" id="inpTitle" placeholder="Začni psát název…" autocomplete="off"><div class="suggestions" id="titleSuggestions"></div></div>
   </div>
   <div class="field">
     <label>Kategorie</label>
@@ -298,7 +334,7 @@
 
   <div class="field">
     <label>Název</label>
-    <input type="text" id="inpWatchTitle" placeholder="např. Poslední z nás">
+    <div class="autocomplete-wrap"><input type="text" id="inpWatchTitle" placeholder="Začni psát název…" autocomplete="off"><div class="suggestions" id="watchSuggestions"></div></div>
   </div>
   <div class="field">
     <label>Kategorie</label>
@@ -333,59 +369,63 @@
   <button class="sheet-btn-ghost" id="editMovie">Upravit</button>
 </div>
 
+
+<div class="sheet confirm-sheet" id="confirmSheet">
+  <button class="sheet-close" data-close aria-label="Zavřít"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 7L10 13L16 7" stroke="#6b6c74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <h2>Smazat položku?</h2>
+  <p id="confirmText"></p>
+  <div class="confirm-actions">
+    <button class="confirm-cancel" id="cancelDelete">Zrušit</button>
+    <button class="confirm-delete" id="confirmDelete">Smazat</button>
+  </div>
+</div>
 <script>
 
   const TMDB_API_KEY = '0899dead6866fb139e5cb434f0863ab5';
   const TMDB_BASE = 'https://api.themoviedb.org/3';
   const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
   let pendingTmdbData = null;
-  let genreCache = { movie: null, tv: null };
+  const tmdbGenreCache = { movie: null, tv: null };
 
-  async function getGenreMap(type) {
-    if (genreCache[type]) return genreCache[type];
+  async function getTmdbGenres(type) {
+    if (tmdbGenreCache[type]) return tmdbGenreCache[type];
     const response = await fetch(`${TMDB_BASE}/genre/${type}/list?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ`);
-    if (!response.ok) throw new Error('Žánry se nepodařilo načíst.');
+    if (!response.ok) throw new Error('genre');
     const data = await response.json();
-    genreCache[type] = Object.fromEntries((data.genres || []).map(g => [g.id, g.name]));
-    return genreCache[type];
+    tmdbGenreCache[type] = Object.fromEntries((data.genres || []).map(g => [g.id, g.name]));
+    return tmdbGenreCache[type];
   }
 
-  async function findTmdbMetadata(title, category, force = false) {
+  async function loadTmdbData(title, category, force = false) {
     const status = document.getElementById('tmdbStatus');
     if (!title) return null;
-    if (!force && pendingTmdbData && pendingTmdbData.query === title && pendingTmdbData.category === category) return pendingTmdbData;
-    status.className = 'tmdb-status';
-    status.textContent = 'Hledám údaje na TMDB…';
+    if (!force && pendingTmdbData?.query === title && pendingTmdbData?.category === category) return pendingTmdbData;
+    if (status) { status.className = 'tmdb-status'; status.textContent = 'Hledám údaje na TMDB…'; }
     try {
       const type = category === 'serial' ? 'tv' : 'movie';
       const response = await fetch(`${TMDB_BASE}/search/${type}?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ&query=${encodeURIComponent(title)}&include_adult=false`);
-      if (!response.ok) throw new Error('Vyhledání se nezdařilo.');
-      const payload = await response.json();
-      const match = payload.results && payload.results[0];
-      if (!match) {
-        pendingTmdbData = null;
-        status.textContent = 'Na TMDB jsem nic nenašel. Plakát můžeš vložit ručně.';
-        return null;
-      }
-      const genres = await getGenreMap(type);
-      const date = category === 'serial' ? match.first_air_date : match.release_date;
+      if (!response.ok) throw new Error('search');
+      const data = await response.json();
+      const found = data.results?.[0];
+      if (!found) { if (status) status.textContent = 'Na TMDB nenalezeno. Můžeš uložit ručně.'; pendingTmdbData = null; return null; }
+      const genreMap = await getTmdbGenres(type);
+      const releaseDate = category === 'serial' ? found.first_air_date : found.release_date;
       pendingTmdbData = {
         query: title,
         category,
-        tmdbId: match.id,
-        poster: match.poster_path ? TMDB_IMAGE_BASE + match.poster_path : '',
-        year: date ? String(date).slice(0, 4) : '',
-        genres: (match.genre_ids || []).map(id => genres[id]).filter(Boolean),
-        description: match.overview || ''
+        tmdbId: found.id,
+        poster: found.poster_path ? TMDB_IMAGE_BASE + found.poster_path : '',
+        genres: (found.genre_ids || []).map(id => genreMap[id]).filter(Boolean),
+        year: releaseDate ? releaseDate.slice(0,4) : '',
+        description: found.overview || ''
       };
-      if (!document.getElementById('inpPoster').value.trim() && pendingTmdbData.poster) document.getElementById('inpPoster').value = pendingTmdbData.poster;
-      const summary = [pendingTmdbData.year, pendingTmdbData.genres.join(' • ')].filter(Boolean).join(' • ');
-      status.className = 'tmdb-status ok';
-      status.textContent = summary ? `Nalezeno: ${summary}` : 'Film byl na TMDB nalezen.';
+      const posterInput = document.getElementById('inpPoster');
+      if (!posterInput.value.trim() && pendingTmdbData.poster) posterInput.value = pendingTmdbData.poster;
+      if (status) { status.className = 'tmdb-status ok'; status.textContent = ['Nalezeno', pendingTmdbData.year, pendingTmdbData.genres.join(' • ')].filter(Boolean).join(': ').replace(': :', ': '); }
       return pendingTmdbData;
     } catch (error) {
+      if (status) status.textContent = 'TMDB údaje se nepodařilo načíst. Položku můžeš uložit i bez nich.';
       pendingTmdbData = null;
-      status.textContent = 'Údaje se nepodařilo načíst. Film můžeš uložit i bez nich.';
       return null;
     }
   }
@@ -480,9 +520,10 @@
     selectedCategory = value;
     document.querySelectorAll('#categoryToggle .segment').forEach(b => b.classList.toggle('active', b.dataset.value === value));
     categoryIndicator.style.transform = value === 'serial' ? 'translateX(100%)' : 'translateX(0%)';
+    if (editingIndex === null) document.getElementById('saveMovie').textContent = value === 'serial' ? 'Uložit seriál' : 'Uložit film';
   }
   document.querySelectorAll('#categoryToggle .segment').forEach(btn => {
-    btn.addEventListener('click', () => setCategoryUI(btn.dataset.value));
+    btn.addEventListener('click', () => { setCategoryUI(btn.dataset.value); if (typeof ratedAutocomplete !== 'undefined') ratedAutocomplete.refresh(); });
   });
 
   // --- kategorie: watchlist sheet ---
@@ -498,7 +539,7 @@
     if (value !== 'serial') inpWatching.checked = false;
   }
   document.querySelectorAll('#watchCategoryToggle .segment').forEach(btn => {
-    btn.addEventListener('click', () => setWatchCategoryUI(btn.dataset.value));
+    btn.addEventListener('click', () => { setWatchCategoryUI(btn.dataset.value); if (typeof watchAutocomplete !== 'undefined') watchAutocomplete.refresh(); });
   });
 
   // --- data ---
@@ -521,62 +562,59 @@
     "linear-gradient(160deg,#2f1f2a,#141116)"
   ];
 
+
+  const iconEdit = `<svg viewBox="0 0 24 24" fill="none"><path d="m4 20 4.2-1 10.6-10.6a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const iconDelete = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  let pendingDelete = null;
+  function bindSwipe(row, onEdit, onDelete) {
+    let sx=0, sy=0, dx=0, tracking=false, horizontal=false, suppressClick=false;
+    const shell=row.closest('.swipe-shell'), editHint=shell.querySelector('.swipe-hint.edit'), deleteHint=shell.querySelector('.swipe-hint.delete');
+    row.addEventListener('touchstart', e=>{ if(e.touches.length!==1)return; sx=e.touches[0].clientX; sy=e.touches[0].clientY; dx=0; tracking=true; horizontal=false; row.style.transition='none'; },{passive:true});
+    row.addEventListener('touchmove', e=>{ if(!tracking)return; const x=e.touches[0].clientX-sx,y=e.touches[0].clientY-sy; if(!horizontal && Math.abs(x)>8) horizontal=Math.abs(x)>Math.abs(y); if(!horizontal)return; e.preventDefault(); dx=Math.max(-105,Math.min(105,x)); if(!onEdit&&dx>0)dx=0; row.style.transform=`translateX(${dx}px)`; editHint.style.opacity=dx>8?Math.min(1,(dx-8)/55):0; deleteHint.style.opacity=dx<-8?Math.min(1,(-dx-8)/55):0; },{passive:false});
+    row.addEventListener('touchend', ()=>{ if(!tracking)return; tracking=false; row.style.transition='transform .24s cubic-bezier(.2,.8,.2,1)'; row.style.transform=''; editHint.style.opacity=0; deleteHint.style.opacity=0; if(Math.abs(dx)>15)suppressClick=true; if(dx>70&&onEdit)onEdit(); if(dx<-70&&onDelete)onDelete(); setTimeout(()=>suppressClick=false,280); });
+    row.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation();}},true);
+  }
+  function requestDelete(type,index,title){ pendingDelete={type,index}; document.getElementById('confirmText').textContent=`Opravdu chceš smazat „${title}“?`; overlay.classList.add('active'); confirmSheet.classList.add('active'); }
+  function openEditAt(index){
+    const m=movies[index]; editingIndex=index;
+    document.getElementById('inpTitle').value=m.title; document.getElementById('inpPoster').value=m.poster; document.getElementById('inpNote').value=m.note;
+    pendingTmdbData={query:m.title,category:m.category,tmdbId:m.tmdbId||null,poster:m.poster||'',genres:m.genres||[],year:m.year||'',description:m.description||''};
+    document.getElementById('tmdbStatus').textContent=[m.year,...(m.genres||[])].filter(Boolean).join(' • ');
+    document.getElementById('tmdbStatus').className='tmdb-status ok';
+    setCategoryUI(m.category); const meVal=m.me/2,herVal=m.her/2; rMe.value=meVal;rHer.value=herVal;
+    updateStarSlider('starMe',meVal);updateStarSlider('starHer',herVal);document.getElementById('valMe').textContent=meVal;document.getElementById('valHer').textContent=herVal;
+    document.getElementById('saveMovie').textContent=m.category==='serial'?'Uložit změny seriálu':'Uložit změny filmu'; closeSheets(); overlay.classList.add('active');addSheet.classList.add('active');
+  }
+
   function renderList(highlightFirst) {
-    const list = document.getElementById('movieList');
-    if (movies.length === 0) {
-      list.innerHTML = '<div class="empty-state">Zatím žádné filmy. Přidej první tlačítkem dole.</div>';
-      return;
-    }
-    list.innerHTML = movies.map((m, i) => {
-      const bg = m.poster ? `background-image:url('${m.poster}')` : `background:${posterFallback[i % posterFallback.length]}`;
-      return `
-        <div class="movie-row" data-index="${i}">
-          <div class="poster" style="${bg}"></div>
-          <div class="movie-info">
-            <h3>${m.title}</h3>
-            <span class="badge">${categoryLabels[m.category] || 'Film'}</span>
-            <div class="ratings">
-              <span class="rating"><strong>${m.me}</strong>Bruno</span>
-              <span class="rating"><strong>${m.her}</strong>Zuzi</span>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
-    if (highlightFirst) { const first = list.querySelector('.movie-row'); if (first) first.classList.add('enter'); }
-    list.querySelectorAll('.movie-row').forEach(row => {
-      row.addEventListener('click', () => openDetail(parseInt(row.dataset.index)));
-    });
+    const list=document.getElementById('movieList');
+    if(!movies.length){list.innerHTML='<div class="empty-state">Zatím žádné filmy. Přidej první tlačítkem dole.</div>';return;}
+    list.innerHTML=movies.map((m,i)=>{const bg=m.poster?`background-image:url('${m.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;return `<div class="swipe-shell"><div class="swipe-hint edit">${iconEdit}</div><div class="swipe-hint delete">${iconDelete}</div><div class="movie-row" data-index="${i}"><div class="poster" style="${bg}"></div><div class="movie-info"><h3>${m.title}</h3><span class="badge">${categoryLabels[m.category]||'Film'}</span><div class="ratings"><span class="compact-rating">${(m.me/2).toFixed(1)} ★<span class="rating-name">Bruno</span></span><span class="compact-rating">${(m.her/2).toFixed(1)} ★<span class="rating-name">Zuzi</span></span></div></div></div></div>`}).join('');
+    if(highlightFirst)list.querySelector('.movie-row')?.classList.add('enter');
+    list.querySelectorAll('.movie-row').forEach(row=>{const i=+row.dataset.index;row.addEventListener('click',()=>openDetail(i));bindSwipe(row,()=>openEditAt(i),()=>requestDelete('movie',i,movies[i].title));});
   }
-
   function renderWatchlist(highlightFirst) {
-    const list = document.getElementById('watchlistList');
-    if (watchlist.length === 0) {
-      list.innerHTML = '<div class="empty-state">Watchlist je prázdný. Přidej první tip tlačítkem dole.</div>';
-      return;
-    }
-    list.innerHTML = watchlist.map((w, i) => `
-      <div class="watch-row" data-index="${i}">
-        <button class="watch-check" data-check="${i}" aria-label="Přesunout do hodnocených"></button>
-        <div class="watch-info">
-          <div class="watch-title">${w.title}</div>
-          <div class="watch-tags">
-            <span class="badge">${categoryLabels[w.category] || 'Film'}</span>
-            ${w.category === 'serial' && w.watching ? '<span class="badge badge-watching">Sledujeme</span>' : ''}
-          </div>
-        </div>
-      </div>`).join('');
-    if (highlightFirst) { const first = list.querySelector('.watch-row'); if (first) first.classList.add('enter'); }
-    list.querySelectorAll('.watch-check').forEach(btn => {
-      btn.addEventListener('click', () => moveToRated(parseInt(btn.dataset.check)));
-    });
+    const list=document.getElementById('watchlistList');
+    if(!watchlist.length){list.innerHTML='<div class="empty-state">Watchlist je prázdný. Přidej první tip tlačítkem dole.</div>';return;}
+    list.innerHTML=watchlist.map((w,i)=>{
+      const posterStyle=w.poster?`background-image:url('${w.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;
+      const metadata=[w.year,...(w.genres||[])].filter(Boolean).join(' • ');
+      return `<div class="swipe-shell"><div class="swipe-hint edit"></div><div class="swipe-hint delete">${iconDelete}</div><div class="watch-row" data-index="${i}"><button class="watch-check" data-check="${i}" aria-label="Přesunout do hodnocených"></button><div class="watch-poster" style="${posterStyle}"></div><div class="watch-info"><div class="watch-title">${w.title}</div><div class="watch-tags"><span class="badge">${categoryLabels[w.category]||'Film'}</span>${w.category==='serial'&&w.watching?'<span class="badge badge-watching">Sledujeme</span>':''}</div>${metadata?`<div class="watch-meta">${metadata}</div>`:''}</div></div></div>`;
+    }).join('');
+    if(highlightFirst)list.querySelector('.watch-row')?.classList.add('enter');
+    list.querySelectorAll('.watch-check').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();moveToRated(+btn.dataset.check)}));
+    list.querySelectorAll('.watch-row').forEach(row=>{const i=+row.dataset.index;bindSwipe(row,null,()=>requestDelete('watch',i,watchlist[i].title));});
   }
-
   function moveToRated(index) {
     const item = watchlist[index];
     watchlist.splice(index, 1);
     renderWatchlist();
     resetAddForm();
     document.getElementById('inpTitle').value = item.title;
+    document.getElementById('inpPoster').value = item.poster || '';
+    pendingTmdbData = { query:item.title, category:item.category, tmdbId:item.tmdbId||null, poster:item.poster||'', genres:item.genres||[], year:item.year||'', description:item.description||'' };
+    document.getElementById('tmdbStatus').textContent = [item.year,...(item.genres||[])].filter(Boolean).join(' • ');
+    document.getElementById('tmdbStatus').className = 'tmdb-status ok';
     setCategoryUI(item.category);
     overlay.classList.add('active');
     addSheet.classList.add('active');
@@ -587,12 +625,14 @@
   const addSheet = document.getElementById('addSheet');
   const watchAddSheet = document.getElementById('watchAddSheet');
   const detailSheet = document.getElementById('detailSheet');
+  const confirmSheet = document.getElementById('confirmSheet');
 
   function closeSheets() {
     overlay.classList.remove('active');
     addSheet.classList.remove('active');
     watchAddSheet.classList.remove('active');
     detailSheet.classList.remove('active');
+    confirmSheet.classList.remove('active');
   }
   overlay.addEventListener('click', closeSheets);
   document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', closeSheets));
@@ -610,18 +650,86 @@
     document.getElementById('valMe').textContent = '3.5';
     document.getElementById('valHer').textContent = '3.5';
     editingIndex = null;
-    document.getElementById('saveMovie').textContent = 'Uložit film';
   }
   function resetWatchForm() {
     document.getElementById('inpWatchTitle').value = '';
     setWatchCategoryUI('film');
   }
 
-  
-  document.getElementById('inpTitle').addEventListener('blur', () => {
-    findTmdbMetadata(document.getElementById('inpTitle').value.trim(), selectedCategory);
-  });
 
+  function debounce(fn, wait=280) {
+    let timer;
+    return (...args) => { clearTimeout(timer); timer=setTimeout(() => fn(...args), wait); };
+  }
+
+  async function searchTmdbSuggestions(query, category) {
+    if (query.trim().length < 2) return [];
+    const type=category==='serial'?'tv':'movie';
+    const response=await fetch(`${TMDB_BASE}/search/${type}?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ&query=${encodeURIComponent(query.trim())}&include_adult=false`);
+    if (!response.ok) throw new Error('suggestions');
+    const data=await response.json();
+    return (data.results||[]).slice(0,6).map(item => {
+      const date=category==='serial'?item.first_air_date:item.release_date;
+      return {
+        tmdbId:item.id,
+        title:category==='serial'?(item.name||item.original_name):(item.title||item.original_title),
+        originalTitle:category==='serial'?item.original_name:item.original_title,
+        year:date?date.slice(0,4):'',
+        poster:item.poster_path?TMDB_IMAGE_BASE+item.poster_path:'',
+        genreIds:item.genre_ids||[],
+        description:item.overview||''
+      };
+    });
+  }
+
+  function setupAutocomplete(inputId, listId, getCategory, onPick) {
+    const input=document.getElementById(inputId), list=document.getElementById(listId);
+    let results=[], activeIndex=-1, requestNo=0;
+    const close=()=>{ list.classList.remove('active'); list.innerHTML=''; activeIndex=-1; };
+    const choose=async item=>{
+      input.value=item.title;
+      const category=getCategory(), type=category==='serial'?'tv':'movie';
+      let genreMap={};
+      try { genreMap=await getTmdbGenres(type); } catch(e) {}
+      pendingTmdbData={query:item.title,category,tmdbId:item.tmdbId,poster:item.poster,genres:item.genreIds.map(id=>genreMap[id]).filter(Boolean),year:item.year,description:item.description};
+      onPick(pendingTmdbData);
+      close();
+    };
+    const run=debounce(async()=>{
+      const query=input.value.trim(), current=++requestNo;
+      if(query.length<2){close();return;}
+      list.innerHTML='<div class="suggestion-empty">Hledám…</div>'; list.classList.add('active');
+      try {
+        const found=await searchTmdbSuggestions(query,getCategory());
+        if(current!==requestNo)return;
+        results=found;
+        if(!found.length){list.innerHTML='<div class="suggestion-empty">Nic nenalezeno</div>';return;}
+        list.innerHTML=found.map((item,i)=>`<button type="button" class="suggestion" data-i="${i}"><span class="suggestion-poster" style="${item.poster?`background-image:url('${item.poster}')`:''}"></span><span class="suggestion-info"><span class="suggestion-title">${item.title}</span><span class="suggestion-meta">${[item.year,item.originalTitle&&item.originalTitle!==item.title?item.originalTitle:''].filter(Boolean).join(' • ')}</span></span></button>`).join('');
+        list.querySelectorAll('.suggestion').forEach(btn=>btn.addEventListener('pointerdown',e=>{e.preventDefault();choose(results[+btn.dataset.i]);}));
+      } catch(e) { if(current===requestNo) list.innerHTML='<div class="suggestion-empty">Našeptávání se nepodařilo načíst</div>'; }
+    });
+    input.addEventListener('input',()=>{pendingTmdbData=null;run();});
+    input.addEventListener('focus',()=>{if(input.value.trim().length>=2)run();});
+    input.addEventListener('keydown',e=>{
+      const buttons=[...list.querySelectorAll('.suggestion')];
+      if(!buttons.length)return;
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();activeIndex=e.key==='ArrowDown'?Math.min(buttons.length-1,activeIndex+1):Math.max(0,activeIndex-1);buttons.forEach((b,i)=>b.classList.toggle('selected',i===activeIndex));}
+      if(e.key==='Enter'&&activeIndex>=0){e.preventDefault();choose(results[activeIndex]);}
+      if(e.key==='Escape')close();
+    });
+    document.addEventListener('pointerdown',e=>{if(!e.target.closest(`#${inputId}`)&&!e.target.closest(`#${listId}`))close();});
+    return {refresh:run,close};
+  }
+
+  const ratedAutocomplete=setupAutocomplete('inpTitle','titleSuggestions',()=>selectedCategory,data=>{
+    if(data.poster)document.getElementById('inpPoster').value=data.poster;
+    const status=document.getElementById('tmdbStatus');
+    status.className='tmdb-status ok';
+    status.textContent=['Nalezeno',data.year,data.genres.join(' • ')].filter(Boolean).join(': ');
+  });
+  const watchAutocomplete=setupAutocomplete('inpWatchTitle','watchSuggestions',()=>selectedWatchCategory,()=>{});
+
+  document.getElementById('inpTitle').addEventListener('blur', () => loadTmdbData(document.getElementById('inpTitle').value.trim(), selectedCategory));
   // --- taby ---
   const tabRated = document.getElementById('tabRated');
   const tabWatch = document.getElementById('tabWatch');
@@ -649,7 +757,8 @@
   document.getElementById('saveMovie').addEventListener('click', async () => {
     const title = document.getElementById('inpTitle').value.trim();
     if (!title) return;
-    const metadata = await findTmdbMetadata(title, selectedCategory);
+    const metadata = await loadTmdbData(title, selectedCategory);
+    const existing = editingIndex !== null ? movies[editingIndex] : null;
     const data = {
       title,
       category: selectedCategory,
@@ -657,10 +766,10 @@
       me: Math.round(parseFloat(rMe.value) * 2),
       her: Math.round(parseFloat(rHer.value) * 2),
       note: document.getElementById('inpNote').value.trim(),
-      tmdbId: metadata?.tmdbId || null,
-      genres: metadata?.genres || [],
-      year: metadata?.year || '',
-      description: metadata?.description || ''
+      tmdbId: metadata?.tmdbId ?? existing?.tmdbId ?? null,
+      genres: metadata?.genres ?? existing?.genres ?? [],
+      year: metadata?.year ?? existing?.year ?? '',
+      description: metadata?.description ?? existing?.description ?? ''
     };
     if (editingIndex !== null) {
       movies[editingIndex] = data;
@@ -673,13 +782,19 @@
     closeSheets();
   });
 
-  document.getElementById('saveWatch').addEventListener('click', () => {
+  document.getElementById('saveWatch').addEventListener('click', async () => {
     const title = document.getElementById('inpWatchTitle').value.trim();
     if (!title) return;
+    const metadata = await loadTmdbData(title, selectedWatchCategory, true);
     watchlist.unshift({
       title,
       category: selectedWatchCategory,
-      watching: selectedWatchCategory === 'serial' && inpWatching.checked
+      watching: selectedWatchCategory === 'serial' && inpWatching.checked,
+      poster: metadata?.poster || '',
+      tmdbId: metadata?.tmdbId || null,
+      genres: metadata?.genres || [],
+      year: metadata?.year || '',
+      description: metadata?.description || ''
     });
     resetWatchForm();
     renderWatchlist(true);
@@ -693,8 +808,8 @@
     posterEl.style.background = m.poster ? `url('${m.poster}') center/cover` : posterFallback[index % posterFallback.length];
     document.getElementById('detailTitle').textContent = m.title;
     document.getElementById('detailBadge').textContent = categoryLabels[m.category] || 'Film';
-    document.getElementById('detailMe').textContent = m.me;
-    document.getElementById('detailHer').textContent = m.her;
+    document.getElementById('detailMe').textContent = `${(m.me / 2).toFixed(1)} ★`;
+    document.getElementById('detailHer').textContent = `${(m.her / 2).toFixed(1)} ★`;
     document.getElementById('detailMeta').textContent = [m.year, ...(m.genres || [])].filter(Boolean).join(' • ');
     document.getElementById('detailDescription').textContent = m.description || '';
     document.getElementById('detailDescription').style.display = m.description ? 'block' : 'none';
@@ -703,27 +818,15 @@
     detailSheet.classList.add('active');
   }
 
-  document.getElementById('editMovie').addEventListener('click', () => {
-    if (currentDetailIndex === null) return;
-    const m = movies[currentDetailIndex];
-    editingIndex = currentDetailIndex;
-    document.getElementById('inpTitle').value = m.title;
-    document.getElementById('inpPoster').value = m.poster;
-    document.getElementById('inpNote').value = m.note;
-    pendingTmdbData = { query: m.title, category: m.category, tmdbId: m.tmdbId || null, poster: m.poster || '', year: m.year || '', genres: m.genres || [], description: m.description || '' };
-    document.getElementById('tmdbStatus').textContent = [m.year, ...(m.genres || [])].filter(Boolean).join(' • ');
-    document.getElementById('tmdbStatus').className = 'tmdb-status ok';
-    setCategoryUI(m.category);
-    const meVal = m.me / 2, herVal = m.her / 2;
-    rMe.value = meVal; rHer.value = herVal;
-    updateStarSlider('starMe', meVal); updateStarSlider('starHer', herVal);
-    document.getElementById('valMe').textContent = meVal;
-    document.getElementById('valHer').textContent = herVal;
-    document.getElementById('saveMovie').textContent = 'Uložit změny';
-    detailSheet.classList.remove('active');
-    addSheet.classList.add('active');
-  });
+  document.getElementById('editMovie').addEventListener('click', () => { if(currentDetailIndex!==null) openEditAt(currentDetailIndex); });
 
+
+  document.getElementById('cancelDelete').addEventListener('click',closeSheets);
+  document.getElementById('confirmDelete').addEventListener('click',()=>{
+    if(!pendingDelete)return;
+    if(pendingDelete.type==='movie')movies.splice(pendingDelete.index,1);else watchlist.splice(pendingDelete.index,1);
+    pendingDelete=null;renderList();renderWatchlist();closeSheets();
+  });
   renderList();
   renderWatchlist();
 </script>
