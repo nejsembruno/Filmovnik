@@ -229,7 +229,7 @@
   .detail-note { font-size: 14px; color: var(--text-dim); line-height: 1.5; }
 
   /* Mobile swipe actions */
-  .swipe-shell { position:relative; overflow:hidden; border-radius:14px; }
+  .swipe-shell { position:relative; overflow:visible; border-radius:14px; }
   .swipe-hint { position:absolute; inset:0; display:flex; align-items:center; opacity:0; pointer-events:none; transition:opacity .12s ease; }
   .swipe-hint.edit { justify-content:flex-start; padding-left:20px; color:var(--gold-bright); background:linear-gradient(90deg,rgba(199,173,110,.16),rgba(199,173,110,.04) 48%,transparent 75%); }
   .swipe-hint.delete { justify-content:flex-end; padding-right:20px; color:#d58a90; background:linear-gradient(270deg,rgba(163,60,68,.17),rgba(163,60,68,.04) 48%,transparent 75%); }
@@ -271,7 +271,7 @@
 
 
   #detailSheet.dragging { transition:none; overflow-y:hidden; }
-  #detailSheet .sheet-close { touch-action:none; cursor:grab; user-select:none; }
+  #detailSheet .sheet-close { touch-action:none; cursor:grab; user-select:none; padding-bottom:34px; }
   #detailSheet .sheet-close:active { cursor:grabbing; }
 
 
@@ -447,7 +447,7 @@
   }
   #detailSheet .detail-backdrop {
     position:absolute;
-    inset:-70px;
+    inset:-140px;
     z-index:0;
     background-color:#15151b;
     background-position:center;
@@ -491,6 +491,59 @@
     background-size:contain !important;
     background-repeat:no-repeat !important;
     box-shadow:0 0 0 1px rgba(255,255,255,.10);
+  }
+
+
+  /* Oprava detailu: plynuly ambientni prechod bez useknuteho obdelniku */
+  #detailSheet .detail-hero {
+    position: relative;
+    margin: -8px -20px -30px;
+    padding: 0 20px 64px;
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+    isolation: isolate;
+    background: #131318;
+  }
+  #detailSheet .detail-hero .hero-close {
+    position: absolute;
+    top: 6px; left: 50%; transform: translateX(-50%);
+    z-index: 3;
+    width: auto; padding: 10px 22px;
+  }
+  #detailSheet .detail-backdrop {
+    position: absolute;
+    inset: -55px -80px -95px;
+    z-index: 0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: blur(72px) saturate(1.35) brightness(.50);
+    transform: scale(1.18);
+    opacity: .82;
+    -webkit-mask-image: radial-gradient(ellipse 78% 72% at 50% 43%, #000 0%, rgba(0,0,0,.95) 45%, rgba(0,0,0,.55) 70%, transparent 100%);
+    mask-image: radial-gradient(ellipse 78% 72% at 50% 43%, #000 0%, rgba(0,0,0,.95) 45%, rgba(0,0,0,.55) 70%, transparent 100%);
+  }
+  #detailSheet .detail-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(to right, #131318 0%, transparent 14%, transparent 86%, #131318 100%),
+      linear-gradient(to bottom, rgba(19,19,24,.02) 0%, transparent 26%, rgba(19,19,24,.42) 66%, rgba(19,19,24,.92) 92%, #131318 100%);
+  }
+  #detailSheet .detail-poster-wrap {
+    position: relative;
+    z-index: 2;
+    width: min(70vw,250px);
+    margin: 92px auto 0;
+    filter: drop-shadow(0 18px 32px rgba(0,0,0,.55));
+  }
+  #detailSheet .detail-content {
+    position: relative;
+    z-index: 2;
+    margin-top: -34px;
   }
 
 </style>
@@ -598,6 +651,7 @@
   <div class="field">
     <label>Název</label>
     <div class="autocomplete-wrap"><input type="text" id="inpWatchTitle" placeholder="Začni psát název…" autocomplete="off"><div class="suggestions" id="watchSuggestions"></div></div>
+    <div class="tmdb-status" id="watchTmdbStatus"></div>
   </div>
   <div class="field">
     <label>Kategorie</label>
@@ -618,10 +672,13 @@
 
 <!-- sheet: detail hodnoceného filmu -->
 <div class="sheet" id="detailSheet">
-  <button class="sheet-close" data-close>
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 7L10 13L16 7" stroke="#6b6c74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
-  <div class="detail-hero"><div class="detail-backdrop" id="detailBackdrop"></div><div class="detail-poster-wrap"><div class="detail-poster-glow" id="detailPosterGlow"></div><div class="detail-poster" id="detailPoster"></div></div></div>
+  <div class="detail-hero">
+    <div class="detail-backdrop" id="detailBackdrop"></div>
+    <button class="sheet-close hero-close" data-close>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 7L10 13L16 7" stroke="#c9cad2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="detail-poster-wrap"><div class="detail-poster-glow" id="detailPosterGlow"></div><div class="detail-poster" id="detailPoster"></div></div>
+  </div>
   <div class="detail-content">
   <div class="detail-title" id="detailTitle"></div>
   <span class="badge" id="detailBadge"></span><div class="detail-meta" id="detailMeta"></div><div class="detail-description" id="detailDescription"></div>
@@ -656,6 +713,8 @@
   const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
   let pendingTmdbData = null;
   const tmdbGenreCache = { movie: null, tv: null };
+  const tmdbSearchCache = new Map();
+  const tmdbSuggestionCache = new Map();
 
   async function getTmdbGenres(type) {
     if (tmdbGenreCache[type]) return tmdbGenreCache[type];
@@ -666,17 +725,22 @@
     return tmdbGenreCache[type];
   }
 
-  async function loadTmdbData(title, category, force = false) {
-    const status = document.getElementById('tmdbStatus');
+  async function loadTmdbData(title, category, force = false, statusId = 'tmdbStatus') {
+    const status = document.getElementById(statusId);
     if (!title) return null;
     if (!force && pendingTmdbData?.query === title && pendingTmdbData?.category === category) return pendingTmdbData;
     if (status) { status.className = 'tmdb-status'; status.textContent = 'Hledám údaje na TMDB…'; }
     try {
       const type = category === 'serial' ? 'tv' : 'movie';
-      const response = await fetch(`${TMDB_BASE}/search/${type}?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ&query=${encodeURIComponent(title)}&include_adult=false`);
-      if (!response.ok) throw new Error('search');
-      const data = await response.json();
-      const found = data.results?.[0];
+      const cacheKey = `${type}:${title.toLowerCase()}`;
+      let found = tmdbSearchCache.get(cacheKey);
+      if (found === undefined) {
+        const response = await fetch(`${TMDB_BASE}/search/${type}?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ&query=${encodeURIComponent(title)}&include_adult=false`);
+        if (!response.ok) throw new Error('search');
+        const data = await response.json();
+        found = data.results?.[0] || null;
+        tmdbSearchCache.set(cacheKey, found);
+      }
       if (!found) { if (status) status.textContent = 'Na TMDB nenalezeno. Můžeš uložit ručně.'; pendingTmdbData = null; return null; }
       const genreMap = await getTmdbGenres(type);
       const releaseDate = category === 'serial' ? found.first_air_date : found.release_date;
@@ -690,7 +754,7 @@
         description: found.overview || ''
       };
       const posterInput = document.getElementById('inpPoster');
-      if (!posterInput.value.trim() && pendingTmdbData.poster) posterInput.value = pendingTmdbData.poster;
+      if (posterInput && !posterInput.value.trim() && pendingTmdbData.poster) posterInput.value = pendingTmdbData.poster;
       if (status) { status.className = 'tmdb-status ok'; status.textContent = ['Nalezeno', pendingTmdbData.year, pendingTmdbData.genres.join(' • ')].filter(Boolean).join(': ').replace(': :', ': '); }
       return pendingTmdbData;
     } catch (error) {
@@ -818,6 +882,10 @@
   bindPreciseStarSlider(rHer,'starHer','valHer');
 
   // --- kategorie: hodnocené sheet ---
+  function normalizeCategory(value) {
+    const category = String(value || '').trim().toLowerCase();
+    return ['serial','series','tv','seriál','seriaľ'].includes(category) ? 'serial' : 'film';
+  }
   const categoryLabels = { film: 'Film', serial: 'Seriál' };
   let selectedCategory = 'film';
   const categoryIndicator = document.getElementById('categoryIndicator');
@@ -860,8 +928,8 @@
     try {
       const m = JSON.parse(localStorage.getItem(STORAGE_MOVIES) || 'null');
       const w = JSON.parse(localStorage.getItem(STORAGE_WATCHLIST) || 'null');
-      if (Array.isArray(m)) movies = m;
-      if (Array.isArray(w)) watchlist = w;
+      if (Array.isArray(m)) movies = m.map(item => ({...item, category: normalizeCategory(item.category)}));
+      if (Array.isArray(w)) watchlist = w.map(item => ({...item, category: normalizeCategory(item.category)}));
     } catch(e) { console.warn('Storage load failed', e); }
   }
 
@@ -916,7 +984,7 @@
   function renderList(highlightFirst) {
     const list=document.getElementById('movieList');
     if(!movies.length){list.innerHTML='<div class="empty-state">Zatím žádné filmy. Přidej první tlačítkem dole.</div>';return;}
-    list.innerHTML=movies.map((m,i)=>{const bg=m.poster?`background-image:url('${m.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;return `<div class="swipe-shell"><div class="swipe-hint edit">${iconEdit}</div><div class="swipe-hint delete">${iconDelete}</div><div class="movie-row" data-index="${i}"><div class="poster" style="${bg}"></div><div class="movie-info"><h3>${m.title}</h3><span class="badge">${categoryLabels[m.category]||'Film'}</span><div class="ratings"><span class="compact-rating">${(m.me/2).toFixed(1)} ★<span class="rating-name">Bruno</span></span><span class="compact-rating">${(m.her/2).toFixed(1)} ★<span class="rating-name">Zuzi</span></span></div></div></div></div>`}).join('');
+    list.innerHTML=movies.map((m,i)=>{const bg=m.poster?`background-image:url('${m.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;return `<div class="swipe-shell"><div class="swipe-hint edit">${iconEdit}</div><div class="swipe-hint delete">${iconDelete}</div><div class="movie-row" data-index="${i}"><div class="poster" style="${bg}"></div><div class="movie-info"><h3>${m.title}</h3><span class="badge">${categoryLabels[normalizeCategory(m.category)]}</span><div class="ratings"><span class="compact-rating">${(m.me/2).toFixed(1)} ★<span class="rating-name">Bruno</span></span><span class="compact-rating">${(m.her/2).toFixed(1)} ★<span class="rating-name">Zuzi</span></span></div></div></div></div>`}).join('');
     if(highlightFirst)list.querySelector('.movie-row')?.classList.add('enter');
     list.querySelectorAll('.movie-row').forEach(row=>{const i=+row.dataset.index;row.addEventListener('click',()=>{row.classList.remove('card-press');void row.offsetWidth;row.classList.add('card-press');setTimeout(()=>openDetail(i),95);});bindSwipe(row,()=>openEditAt(i),()=>requestDelete('movie',i,movies[i].title));});
   }
@@ -926,7 +994,7 @@
     list.innerHTML=watchlist.map((w,i)=>{
       const posterStyle=w.poster?`background-image:url('${w.poster}')`:`background:${posterFallback[i%posterFallback.length]}`;
       const metadata=[w.year,...(w.genres||[])].filter(Boolean).join(' • ');
-      return `<div class="swipe-shell"><div class="swipe-hint edit"></div><div class="swipe-hint delete">${iconDelete}</div><div class="watch-row" data-index="${i}"><button class="watch-check" data-check="${i}" aria-label="Přesunout do hodnocených"></button><div class="watch-poster" style="${posterStyle}"></div><div class="watch-info"><div class="watch-title">${w.title}</div><div class="watch-tags"><span class="badge">${categoryLabels[w.category]||'Film'}</span>${w.category==='serial'&&w.watching?'<span class="badge badge-watching">Sledujeme</span>':''}</div>${metadata?`<div class="watch-meta">${metadata}</div>`:''}</div></div></div>`;
+      return `<div class="swipe-shell"><div class="swipe-hint edit"></div><div class="swipe-hint delete">${iconDelete}</div><div class="watch-row" data-index="${i}"><button class="watch-check" data-check="${i}" aria-label="Přesunout do hodnocených"></button><div class="watch-poster" style="${posterStyle}"></div><div class="watch-info"><div class="watch-title">${w.title}</div><div class="watch-tags"><span class="badge">${categoryLabels[normalizeCategory(w.category)]}</span>${w.category==='serial'&&w.watching?'<span class="badge badge-watching">Sledujeme</span>':''}</div>${metadata?`<div class="watch-meta">${metadata}</div>`:''}</div></div></div>`;
     }).join('');
     if(highlightFirst)list.querySelector('.watch-row')?.classList.add('enter');
     list.querySelectorAll('.watch-check').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();moveToRated(+btn.dataset.check)}));
@@ -1080,6 +1148,9 @@
   function resetWatchForm() {
     if(typeof watchAutocomplete!=='undefined')watchAutocomplete.close();
     document.getElementById('inpWatchTitle').value = '';
+    document.getElementById('watchTmdbStatus').textContent = '';
+    document.getElementById('watchTmdbStatus').className = 'tmdb-status';
+    pendingTmdbData = null;
     setWatchCategoryUI('film');
   }
 
@@ -1097,10 +1168,13 @@
 
   async function searchTmdbSuggestions(query,category,signal) {
     const type=category==='serial'?'tv':'movie';
+    const cacheKey=`${type}:${query.toLowerCase()}`;
+    const cached=tmdbSuggestionCache.get(cacheKey);
+    if(cached)return cached;
     const response=await fetch(`${TMDB_BASE}/search/${type}?api_key=${encodeURIComponent(TMDB_API_KEY)}&language=cs-CZ&query=${encodeURIComponent(query)}&include_adult=false`,{signal});
     if(!response.ok)throw new Error(`TMDB ${response.status}`);
     const data=await response.json();
-    return (data.results||[]).slice(0,6).map(item=>{
+    const mapped=(data.results||[]).slice(0,6).map(item=>{
       const date=category==='serial'?item.first_air_date:item.release_date;
       return {
         tmdbId:item.id,
@@ -1112,6 +1186,8 @@
         description:item.overview||''
       };
     }).filter(item=>item.title);
+    tmdbSuggestionCache.set(cacheKey,mapped);
+    return mapped;
   }
 
   function setupAutocomplete(inputId,listId,getCategory,onPick) {
@@ -1225,7 +1301,11 @@
     status.className='tmdb-status ok';
     status.textContent=[data.year,data.genres.join(' • ')].filter(Boolean).join(' • ');
   });
-  const watchAutocomplete=setupAutocomplete('inpWatchTitle','watchSuggestions',()=>selectedWatchCategory,()=>{});
+  const watchAutocomplete=setupAutocomplete('inpWatchTitle','watchSuggestions',()=>selectedWatchCategory,data=>{
+    const status=document.getElementById('watchTmdbStatus');
+    status.className='tmdb-status ok';
+    status.textContent=[data.year,data.genres.join(' • ')].filter(Boolean).join(' • ');
+  });
 
   const scrollPositions = { rated: 0, watch: 0, hall: 0 };
   let toastTimer = null;
@@ -1301,7 +1381,7 @@
     const existing = editingIndex !== null ? movies[editingIndex] : null;
     const data = {
       title,
-      category: selectedCategory,
+      category: normalizeCategory(document.querySelector('#categoryToggle .segment.active')?.dataset.value || selectedCategory),
       poster: document.getElementById('inpPoster').value.trim(),
       me: Math.round(parseFloat(rMe.value) * 2),
       her: Math.round(parseFloat(rHer.value) * 2),
@@ -1329,10 +1409,10 @@
   document.getElementById('saveWatch').addEventListener('click', async () => {
     const title = document.getElementById('inpWatchTitle').value.trim();
     if (!title) return;
-    const metadata = await loadTmdbData(title, selectedWatchCategory, true);
+    const metadata = await loadTmdbData(title, selectedWatchCategory, false, 'watchTmdbStatus');
     watchlist.unshift({
       title,
-      category: selectedWatchCategory,
+      category: normalizeCategory(document.querySelector('#watchCategoryToggle .segment.active')?.dataset.value || selectedWatchCategory),
       watching: selectedWatchCategory === 'serial' && inpWatching.checked,
       poster: metadata?.poster || '',
       tmdbId: metadata?.tmdbId || null,
@@ -1365,7 +1445,7 @@
       backdropEl.style.opacity = '.72';
     }
     document.getElementById('detailTitle').textContent = m.title;
-    document.getElementById('detailBadge').textContent = categoryLabels[m.category] || 'Film';
+    document.getElementById('detailBadge').textContent = categoryLabels[normalizeCategory(m.category)];
     document.getElementById('detailMe').textContent = `${(m.me / 2).toFixed(1)} ★`;
     document.getElementById('detailHer').textContent = `${(m.her / 2).toFixed(1)} ★`;
     document.getElementById('detailMeta').textContent = [m.year, ...(m.genres || [])].filter(Boolean).join(' • ');
