@@ -50,18 +50,6 @@
         rgba(0,0,0,0) 100%
       );
   }
-  .starfield::after { content:none; }
-  .dust { display:none; }
-  .dust span { position: absolute; width: 2px; height: 2px; background: #cfcfd6; border-radius: 50%; }
-  .stars-layer { display:none; }
-  .star {
-    position: absolute; width: 9px; height: 9px; background: var(--gold);
-    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%,
-                        50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-    opacity: 0.8;
-  }
-  .star.sm { width: 5px; height: 5px; opacity: 0.55; }
-  .star.lg { width: 12px; height: 12px; opacity: 0.9; }
 
   .content { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 28px 18px 130px; }
 
@@ -99,6 +87,9 @@
     border: 2px solid var(--text-dim); background: none; padding: 0;
   }
   .watch-check:active { transform: scale(0.9); }
+  .fab:active { transform: translateX(-50%) scale(0.96); }
+  .sheet-btn:active, .sheet-btn-ghost:active, .tab-btn:active, .segment:active { transform: scale(0.96); }
+  .fab, .sheet-btn, .sheet-btn-ghost, .tab-btn, .segment { transition: transform 0.12s ease; }
   .watch-info { flex: 1; min-width: 0; }
   .watch-title { font-size: 15px; font-weight: 600; }
   .watch-tags { display: flex; gap: 6px; margin-top: 6px; }
@@ -110,9 +101,6 @@
   .badge-watching { color: #16130a; background: var(--gold-bright); }
 
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); font-size: 14px; }
-
-  @keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .movie-row.enter, .watch-row.enter { animation: rowIn 0.3s ease-out; }
 
   .fab {
     position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%);
@@ -552,8 +540,6 @@
 
 <div class="scene">
   <div class="starfield">
-    <div class="dust" id="dust"></div>
-    <div class="stars-layer" id="stars"></div>
   </div>
 
   <div class="content">
@@ -753,7 +739,7 @@
         year: releaseDate ? releaseDate.slice(0,4) : '',
         description: found.overview || ''
       };
-      const posterInput = document.getElementById('inpPoster');
+      const posterInput = statusId === 'tmdbStatus' ? document.getElementById('inpPoster') : null;
       if (posterInput && !posterInput.value.trim() && pendingTmdbData.poster) posterInput.value = pendingTmdbData.poster;
       if (status) { status.className = 'tmdb-status ok'; status.textContent = ['Nalezeno', pendingTmdbData.year, pendingTmdbData.genres.join(' • ')].filter(Boolean).join(': ').replace(': :', ': '); }
       return pendingTmdbData;
@@ -763,29 +749,6 @@
       return null;
     }
   }
-
-  // --- hvězdné pozadí ---
-  const starPositions = [
-    [5,3,'sm'],[20,5,'lg'],[42,4,'md'],[68,5,'md'],[80,8,'sm'],[95,3,'sm'],
-    [3,10,'sm'],[92,14,'md'],[2,26,'sm'],[97,30,'md'],[3,45,'sm'],[96,42,'lg'],
-    [2,60,'sm'],[95,58,'md'],[3,75,'sm'],[93,72,'md'],
-    [8,92,'md'],[22,96,'sm'],[42,99,'sm'],[58,97,'md'],[73,94,'sm'],[88,90,'lg'],
-    [13,86,'sm'],[46,88,'sm']
-  ];
-  const starsBg = document.getElementById('stars');
-  starPositions.forEach(([x,y,size]) => {
-    const el = document.createElement('div');
-    el.className = 'star' + (size === 'sm' ? ' sm' : size === 'lg' ? ' lg' : '');
-    el.style.left = x + '%'; el.style.top = y + '%';
-    starsBg.appendChild(el);
-  });
-  const dust = document.getElementById('dust');
-  let dustHtml = '';
-  for (let i = 0; i < 70; i++) {
-    const x = Math.random() * 100, y = Math.random() * 100, s = Math.random() * 1.4 + 0.5;
-    dustHtml += `<span style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;opacity:${Math.random()*0.4+0.15}"></span>`;
-  }
-  dust.innerHTML = dustHtml;
 
   // --- star rating slider ---
   function starColor(t) {
@@ -940,7 +903,6 @@
     { title: "The Bear", category: "serial", poster: "", me: 9, her: 8, note: "" },
     { title: "Poor Things", category: "film", poster: "", me: 9, her: 6, note: "Vizuálně unikátní, ale ne pro každého." }
   ];
-  loadStoredData();
 
   let watchlist = [
     { title: "Poslední z nás", category: "serial", watching: true },
@@ -1055,6 +1017,15 @@
   const confirmSheet = document.getElementById('confirmSheet');
   new MutationObserver(() => setSheetLock(overlay.classList.contains('active'))).observe(overlay,{attributes:true,attributeFilter:['class']});
 
+  function playEnter(listId, rowSelector) {
+    window.setTimeout(() => {
+      const row = document.getElementById(listId)?.querySelector(rowSelector);
+      if (!row) return;
+      row.classList.remove('enter');
+      void row.offsetWidth;
+      row.classList.add('enter');
+    }, 320);
+  }
   function closeSheets() {
     setSheetLock(false);
     overlay.classList.remove('active');
@@ -1391,15 +1362,17 @@
       year: metadata?.year ?? existing?.year ?? '',
       description: metadata?.description ?? existing?.description ?? ''
     };
+    const wasEdit = editingIndex !== null;
     if (editingIndex !== null) {
       movies[editingIndex] = data;
       renderList(false);
     } else {
       movies.unshift(data);
-      renderList(true);
+      renderList(false);
     }
     resetAddForm();
     closeSheets();
+    if (!wasEdit) playEnter('movieList', '.movie-row');
     updateHeaderSummary();
     renderHallOfFame();
     saveData();
@@ -1421,8 +1394,9 @@
       description: metadata?.description || ''
     });
     resetWatchForm();
-    renderWatchlist(true);
+    renderWatchlist(false);
     closeSheets();
+    playEnter('watchlistList', '.watch-row');
     updateHeaderSummary();
     renderHallOfFame();
     saveData();
